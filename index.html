@@ -3,7 +3,13 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Cardiovascular Drug Interaction Model</title>
+<!-- Cache control: tell mobile browsers to NOT serve the previous cached HTML. The actual
+     enforcement happens at the CDN/Netlify level, but these meta tags help when the file is
+     served standalone. -->
+<meta http-equiv="Cache-Control" content="no-cache, no-store, must-revalidate" />
+<meta http-equiv="Pragma" content="no-cache" />
+<meta http-equiv="Expires" content="0" />
+<title>Cardiovascular Drug Interaction Model · v2026-06-09-FAB-KILLSW</title>
 <script src="https://cdn.jsdelivr.net/npm/tesseract.js@5/dist/tesseract.min.js" defer></script>
 <style>
   :root{
@@ -201,35 +207,34 @@
   .rx-or{text-align:center;color:var(--muted);font-size:11px;text-transform:uppercase;letter-spacing:0.1em;margin:14px 0 6px;font-weight:600}
   .rx-textarea{width:100%;min-height:140px;background:var(--bg);color:var(--text);border:1px solid var(--border);border-radius:6px;padding:10px;font:13px ui-monospace,Menlo,Consolas,monospace;line-height:1.5;resize:vertical}
   .rx-textarea:focus{outline:none;border-color:var(--accent)}
-  /* ----- Compact icon-toolbar for OCR-text editor & quick-add chips ----- */
-  /* Toolbar row holds both tool buttons. Centred under the photo buttons. */
-  .rx-tool-row{display:flex;gap:8px;justify-content:center;flex-wrap:wrap;margin:14px auto 0;max-width:680px;align-items:flex-start}
+  /* ----- JS-controlled icon toolbar (no <details>) ----- */
+  /* Toolbar row of two FAB buttons. Panels are absolute hidden divs that JS toggles. */
+  .rx-tool-row{display:flex;gap:10px;justify-content:center;flex-wrap:wrap;margin:14px auto 0;max-width:680px;align-items:center}
+  .rx-fab{appearance:none;-webkit-appearance:none;background:#161b22;border:1px solid #2a3441;color:#cbd5e1;padding:8px 14px;border-radius:18px;font:inherit;font-size:13px;font-weight:500;cursor:pointer;display:inline-flex;align-items:center;gap:7px;min-height:38px;transition:background 0.15s,border-color 0.15s,color 0.15s;touch-action:manipulation;line-height:1}
+  .rx-fab:hover{background:#1c2941;border-color:#3a4a64;color:#e2e8f0}
+  .rx-fab:active{transform:scale(0.97)}
+  .rx-fab[aria-expanded="true"]{background:rgba(125,211,252,0.12);border-color:#7dd3fc;color:#7dd3fc}
+  .rx-panel{display:none;max-width:680px;margin:10px auto 0;background:linear-gradient(180deg,#172033 0%,#141b29 100%);border:1px solid #3a4a64;border-radius:10px;box-shadow:0 2px 6px rgba(125,211,252,0.08);overflow:hidden;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif}
+  .rx-panel[hidden]{display:none !important}
+  .rx-panel.rx-open{display:block}
+  .rx-panel-head{display:flex;align-items:center;gap:8px;padding:11px 14px;background:rgba(125,211,252,0.04);border-bottom:1px solid #2a3441;color:#e2e8f0;font-weight:600;font-size:13.5px}
+  .rx-panel-head .rx-tool-icon{flex-shrink:0}
+  .rx-panel-head > span:nth-child(2){flex:1;min-width:0}
+  .rx-panel-close{appearance:none;background:transparent;border:none;color:#94a3b8;font-size:18px;line-height:1;cursor:pointer;padding:4px 8px;border-radius:6px;min-width:32px;min-height:32px;touch-action:manipulation}
+  .rx-panel-close:hover{background:rgba(248,113,113,0.1);color:#fca5a5}
+  .rx-panel-body{padding:13px 14px}
   /* CLOSED state — each tool is just an inline-block pill, NOT full-width. Use
      `width:auto` and `display:inline-block` defensively because some mobile browsers
      render <details> as block by default which would push the tools to fill width. */
-  .rx-tool{display:inline-block;width:auto;background:transparent;border:none;padding:0;margin:0;vertical-align:top;transition:all 0.18s}
-  .rx-tool:not([open]){max-width:fit-content}
-  .rx-tool > summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:6px;padding:8px 14px;border:1px solid #2a3441;border-radius:18px;background:#161b22;color:#cbd5e1;font-size:13px;font-weight:500;transition:background 0.15s,border-color 0.15s,color 0.15s;user-select:none;touch-action:manipulation;min-height:36px;box-sizing:border-box}
-  .rx-tool > summary::-webkit-details-marker{display:none}
-  .rx-tool > summary::marker{display:none}
-  .rx-tool > summary:hover{background:#1c2941;border-color:#3a4a64;color:#e2e8f0}
-  .rx-tool > summary:active{transform:scale(0.97)}
   .rx-tool-icon{width:20px;height:20px;border-radius:50%;background:rgba(125,211,252,0.18);color:#7dd3fc;display:inline-flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;line-height:1;flex-shrink:0}
   .rx-tool-label{font-size:13px;white-space:nowrap}
-  /* Tiny chevron — different glyph for open/closed */
-  .rx-tool > summary::before{content:"▶";color:#64748b;font-size:9px;margin-right:1px}
-  .rx-tool[open] > summary::before{content:"▼";color:#7dd3fc}
-  /* OPEN state — full-width panel below */
-  .rx-tool[open]{display:block;width:100%;flex:1 1 100%;background:linear-gradient(180deg,#172033 0%,#141b29 100%);border:1px solid #3a4a64;border-radius:10px;box-shadow:0 2px 6px rgba(125,211,252,0.08);min-width:0;max-width:none}
-  .rx-tool[open] > summary{display:flex;width:100%;padding:12px 14px;border:none;border-radius:10px 10px 0 0;background:rgba(125,211,252,0.04);border-bottom:1px solid #2a3441;color:#e2e8f0;font-weight:600;font-size:13.5px}
-  .rx-tool-body{padding:13px 14px}
   .rx-quick-add-intro{font-size:12px;color:#94a3b8;margin-bottom:9px;line-height:1.5}
   #rx-quick-add-chips{display:flex;flex-wrap:wrap;gap:6px}
-  /* Mobile — hide the text label, keep just icon + chevron */
+  /* Mobile — hide the text label, keep just the icon for max compactness */
   @media (max-width:760px){
-    .rx-tool > summary{padding:8px 13px;min-height:38px}
-    .rx-tool:not([open]) .rx-tool-label{display:none}
-    .rx-tool-row{justify-content:center;gap:10px;margin-top:12px}
+    .rx-fab{padding:9px 13px;min-height:40px}
+    .rx-fab .rx-tool-label{display:none}
+    .rx-tool-row{justify-content:center;gap:14px;margin-top:12px}
   }
   /* Quick-add chip — soft neutral palette, easy on the eye */
   .rx-quick-chip{background:var(--panel2);border:1px solid var(--border);color:var(--text);padding:6px 12px;border-radius:16px;font:inherit;font-size:12.5px;cursor:pointer;touch-action:manipulation;transition:background 0.15s,border-color 0.15s,transform 0.05s;font-weight:500}
@@ -546,6 +551,37 @@
 </style>
 </head>
 <body>
+<!-- CACHE-BUSTER + SERVICE-WORKER KILLER — runs immediately on page load so any cached
+     version of the app (Service Worker, AppCache, browser HTTP cache) is purged.
+     Runs BEFORE the rest of the page renders so the user always sees the latest build. -->
+<script>
+(function killAllCaches(){
+  try {
+    // 1) Unregister every Service Worker on this origin
+    if('serviceWorker' in navigator){
+      navigator.serviceWorker.getRegistrations().then(regs=>{
+        regs.forEach(r => { try{ r.unregister(); }catch(e){} });
+      }).catch(()=>{});
+    }
+    // 2) Wipe every Cache Storage API cache on this origin
+    if('caches' in window){
+      caches.keys().then(keys=>{
+        keys.forEach(k => { try{ caches.delete(k); }catch(e){} });
+      }).catch(()=>{});
+    }
+  } catch(e) { /* ignore — older browsers don't support these APIs */ }
+})();
+</script>
+<!-- LOUD VERSION BANNER — if you see this, you ARE on the new build. -->
+<div id="build-banner" style="background:linear-gradient(90deg,#0c4a6e 0%,#075985 100%);color:#bae6fd;text-align:center;padding:6px 12px;font-size:12px;font-weight:600;letter-spacing:0.04em;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <span style="opacity:0.85">build</span>
+  <b style="color:#fff;margin:0 4px">v2026-06-09-FAB-KILLSW</b>
+  <span style="opacity:0.85">· deployed&nbsp;</span><b style="color:#fff" id="build-time"></b>
+</div>
+<script>
+  // Stamp the build banner with the page-load timestamp so the user can confirm a fresh fetch
+  try { document.getElementById('build-time').textContent = new Date().toLocaleString(); } catch(e){}
+</script>
 <header>
   <h1>Cardiovascular &amp; Cardiometabolic Drug Reference</h1>
   <p>CV drugs incl. ARNI, ivabradine, ranolazine, SGLT2i, GLP-1 RAs &middot; ICU formulary &middot; interactions &middot; comorbidity dosing &middot; for clinicians and pharmacists</p>
@@ -618,6 +654,7 @@
     <div style="font-size:12.5px;color:var(--muted);margin:6px 0 14px;line-height:1.55;text-align:center">
       Snap a photo of a prescription → automatic OCR → drug interactions & dose adjustments flagged.
       <span style="color:#fcd34d;display:block;margin-top:4px">⚠ Always verify with the prescribing clinician.</span>
+      <span style="display:block;margin-top:8px;font-size:10.5px;color:#64748b;letter-spacing:0.04em">build <b style="color:#7dd3fc">v2026-06-09-FAB-KILLSW</b> · if you don't see this version on mobile, hard-refresh (close tab → reopen)</span>
     </div>
 
     <!-- TWO SIDE-BY-SIDE BUTTONS — Take Photo (camera) + Upload (file browser).
@@ -648,38 +685,50 @@
       </label>
     </div>
 
-    <!-- Compact icon-toolbar: two small round buttons that expand to full panels on click.
-         When collapsed they're just icons + tiny inline label; takes one row only. -->
+    <!-- JS-controlled icon toolbar — explicit buttons + hidden panels, no <details> quirks.
+         When closed, panels are display:none so they CANNOT take any space. -->
     <div class="rx-tool-row">
-      <details id="rx-text-section" class="rx-tool">
-        <summary id="rx-text-summary" title="Type or paste prescription text">
-          <span class="rx-tool-icon">✏️</span>
-          <span class="rx-tool-label">Edit text</span>
-        </summary>
-        <div class="rx-tool-body">
-          <div class="rx-helper" id="rx-text-helper">
-            List each drug + dose on a separate line, then add diagnoses.<br>
-            Example: <code>Atorva 20 mg OD · Ecosprin 75 · Clarithro 500 BD · CKD-3, T2DM, G2P1 at 28 wks</code>
-          </div>
-          <textarea id="rx-text" class="rx-textarea" placeholder="Tab. Atorva 20 mg HS&#10;Tab. Ecosprin 75 mg OD&#10;Tab. Clarithromycin 500 mg BD&#10;Tab. Metformin 500 mg BD&#10;Inj. Enoxaparin 60 mg SC BD&#10;&#10;Diagnosis: T2DM, hypertension, CKD stage 3, recent MI"></textarea>
-          <div class="rx-actions">
-            <button class="primary" id="rx-analyze">⚡ Analyze prescription</button>
-            <button class="secondary" id="rx-clear">Clear all</button>
-          </div>
-          <div id="rx-status" class="rx-status"></div>
-        </div>
-      </details>
-      <details id="rx-quick-add" class="rx-tool">
-        <summary title="Add a missing drug from the curated list">
-          <span class="rx-tool-icon">＋</span>
-          <span class="rx-tool-label">Add drug</span>
-        </summary>
-        <div class="rx-tool-body rx-quick-add-body">
-          <div class="rx-quick-add-intro">Tap any chip to add it and re-analyze. Or open the Edit text panel and type the missing brand/generic.</div>
-          <div id="rx-quick-add-chips"></div>
-        </div>
-      </details>
+      <button type="button" class="rx-fab" id="rx-fab-edit" data-target="rx-panel-edit" aria-expanded="false" aria-label="Edit prescription text">
+        <span class="rx-tool-icon">✏️</span><span class="rx-tool-label">Edit text</span>
+      </button>
+      <button type="button" class="rx-fab" id="rx-fab-add" data-target="rx-panel-add" aria-expanded="false" aria-label="Add a missing drug">
+        <span class="rx-tool-icon">＋</span><span class="rx-tool-label">Add drug</span>
+      </button>
     </div>
+    <!-- Hidden panels — toggled by JS. They live OUTSIDE the toolbar so they expand full-width. -->
+    <div id="rx-panel-edit" class="rx-panel" hidden>
+      <div class="rx-panel-head">
+        <span class="rx-tool-icon">✏️</span><span>Edit prescription text</span>
+        <button type="button" class="rx-panel-close" data-close="rx-panel-edit" aria-label="Close">✕</button>
+      </div>
+      <div class="rx-panel-body">
+        <div class="rx-helper" id="rx-text-helper">
+          List each drug + dose on a separate line, then add diagnoses.<br>
+          Example: <code>Atorva 20 mg OD · Ecosprin 75 · Clarithro 500 BD · CKD-3, T2DM, G2P1 at 28 wks</code>
+        </div>
+        <textarea id="rx-text" class="rx-textarea" placeholder="Tab. Atorva 20 mg HS&#10;Tab. Ecosprin 75 mg OD&#10;Diagnosis: T2DM, hypertension, CKD-3, recent MI"></textarea>
+        <div class="rx-actions">
+          <button class="primary" id="rx-analyze">⚡ Analyze prescription</button>
+          <button class="secondary" id="rx-clear">Clear all</button>
+        </div>
+        <div id="rx-status" class="rx-status"></div>
+      </div>
+    </div>
+    <div id="rx-panel-add" class="rx-panel" hidden>
+      <div class="rx-panel-head">
+        <span class="rx-tool-icon">＋</span><span>Add a missing drug</span>
+        <button type="button" class="rx-panel-close" data-close="rx-panel-add" aria-label="Close">✕</button>
+      </div>
+      <div class="rx-panel-body rx-quick-add-body">
+        <div class="rx-quick-add-intro">Tap any chip to add it and re-analyze.</div>
+        <div id="rx-quick-add-chips"></div>
+      </div>
+    </div>
+    <!-- Legacy hidden anchors so existing scripts (reset, OCR) can still find these IDs.
+         They point to the same panels above. -->
+    <span id="rx-text-section" hidden></span>
+    <span id="rx-text-summary" hidden></span>
+    <span id="rx-quick-add" hidden></span>
 
     <div id="rx-results" class="rx-results"></div>
 
@@ -4656,7 +4705,7 @@ const indianBrands = {
   spironolactone:['Aldactone (RPG)','Spiractin (Cipla)','Spirolone','Spirix (Mankind)','Lactone'],
   eplerenone:['Inspra (Pfizer)','Eplotaz (Sun)','Plenastra (Mankind)','Eplerite (Lupin)'],
   // Antiarrhythmics
-  amiodarone:['Cordarone (Sanofi)','Amipace (Sun)','Tachyra (Cipla)','Eurythmic'],
+  amiodarone:['Cordarone (Sanofi)','Carderone (variant spelling)','Amipace (Sun)','Tachyra (Cipla)','Eurythmic'],
   sotalol:['Sotalol (limited brands)','Sotagard'],
   flecainide:['Flecaine (limited)','Tambocor — limited'],
   propafenone:['Rythmol (limited)','Propanorm'],
@@ -7492,6 +7541,9 @@ const RX_INDEX = (() => {
 const RX_COMBO_BRANDS = {
   // PPI + prokinetic
   'nexpro it':['esomeprazole','itopride'],
+  'sompraz d':['esomeprazole','domperidone'],
+  'sompraz':['esomeprazole'],
+  'esoz d':['esomeprazole','domperidone'],
   'nexpro l':['esomeprazole','levosulpiride'],
   'pantocid it':['pantoprazole','itopride'],
   'pan it':['pantoprazole','itopride'],
@@ -7553,8 +7605,12 @@ const RX_COMBO_BRANDS = {
   'gluxit':['dapagliflozin'],
   'oxramet':['dapagliflozin','metformin'],
   'forxiga-m':['dapagliflozin','metformin'],
-  'dapa-m':['dapagliflozin','metformin'],
-  'udapa-m':['dapagliflozin','metformin'],
+  // NOTE: 'udapa-m' / 'dapa-m' removed from flat-match combos because the flat-text scan
+  // strips the hyphen and creates "udapam" / "dapam" which collide with "UDAPA MG" / "DAPA MG"
+  // (the standard dose unit). Users prescribing Udapa-M should write it with a space ("UDAPA M")
+  // and we'll catch metformin via the regular token pass.
+  // 'dapa-m':['dapagliflozin','metformin'],
+  // 'udapa-m':['dapagliflozin','metformin'],
   'jardiance-m':['empagliflozin','metformin'],
   'glycomet-em':['metformin','empagliflozin'],
   // ACEi/ARB + thiazide combos
@@ -7982,6 +8038,10 @@ function rxFindDrugs(text){
     ['cilacar',     'cilnidipine',   'Cilacar'],
     // Antiarrhythmic / digoxin / nitrate
     ['cordarone',   'amiodarone',    'Cordarone'],
+    ['carderone',   'amiodarone',    'Carderone'],
+    ['udapa',       'dapagliflozin', 'Udapa'],
+    ['vymada',      'sac_val',       'Vymada'],
+    ['sompraz',     'esomeprazole',  'Sompraz'],
     ['amipace',     'amiodarone',    'Amipace'],
     ['lanoxin',     'digoxin',       'Lanoxin'],
     ['nitrocon',    'ntg',           'Nitrocontin'],
@@ -8582,16 +8642,11 @@ function rxResetAnalysisState(opts){
   // 3) File inputs — wipe so the same filename can be re-selected
   const imgEl = document.getElementById('rx-image'); if(imgEl) imgEl.value = '';
   const upEl  = document.getElementById('rx-upload'); if(upEl) upEl.value = '';
-  // 4) OCR-section UI — collapse and restore default label
-  const section = document.getElementById('rx-text-section');
-  if(section) section.open = false;
-  const summary = document.getElementById('rx-text-summary');
+  // 4) Force-close both FAB panels (Edit text + Add drug) via JS toggle API
+  if(typeof window.rxCloseAllPanels === 'function') window.rxCloseAllPanels();
+  // 5) Restore default helper text in the edit panel
   const helper  = document.getElementById('rx-text-helper');
-  if(summary) summary.innerHTML = '<span class="rx-tool-icon">✏️</span><span class="rx-tool-label">Edit text</span>';
   if(helper)  helper.innerHTML = 'List each drug + dose on a separate line, then add diagnoses.<br>Example: <code>Atorva 20 mg OD · Ecosprin 75 · Clarithro 500 BD · CKD-3, T2DM, G2P1 at 28 wks</code>';
-  // 5) Also collapse the quick-add chips panel
-  const qa = document.getElementById('rx-quick-add');
-  if(qa) qa.open = false;
 }
 
 async function rxHandleFileSelected(file, sourceLabel){
@@ -8827,21 +8882,17 @@ async function runOCRAndAnalyze(){
     const ta = document.getElementById('rx-text');
     ta.value = merged;
 
-    // Keep the text section COLLAPSED — only update the label so the user knows OCR text is
-    // available to view/edit if needed. This saves vertical space; analysis results take the
-    // centre of the page. User taps the prominent label to open if they want to edit.
-    const section = document.getElementById('rx-text-section');
-    const summary = document.getElementById('rx-text-summary');
+    // Keep the Edit-text panel CLOSED (it's the JS-controlled hidden div). The user can tap
+    // the ✏️ FAB to open it if they want to review/edit. Saves vertical space on mobile.
+    if(typeof window.rxClosePanel === 'function') window.rxClosePanel('rx-panel-edit');
     const helper  = document.getElementById('rx-text-helper');
     const lineCount = merged.split('\n').filter(l=>l.trim().length>0).length;
-    if(section) section.open = false;
-    if(summary) summary.innerHTML = '<span class="rx-tool-icon">✏️</span><span class="rx-tool-label">Edit text (<b>'+lineCount+' lines</b>)</span>';
     if(helper)  helper.innerHTML = '<b style="color:var(--text)">Below is what the camera read.</b> Compare against the prescription and fix any drug that was mis-read, then tap <b>⚡ Analyze</b> again.';
 
     setStatus(`✓ Extracted ${merged.length} chars from ${passes.length} OCR pass${passes.length===1?'':'es'}. Running analysis…`, 'ok');
     await new Promise(r=>setTimeout(r,100));
     runAnalysis();
-    setStatus(`✓ Done — see results below. <span style="color:var(--muted)">${passes.length}-pass OCR · ${lineCount} lines extracted · tap the OCR text label below to view/edit.</span>`, 'ok');
+    setStatus(`✓ Done — see results below. <span style="color:var(--muted)">${passes.length}-pass OCR · ${lineCount} lines extracted · tap ✏️ to view/edit OCR text.</span>`, 'ok');
   } catch(e){
     setStatus('⚠ OCR error: ' + escapeHtml(e.message||String(e)) + '. Type the prescription manually below.', 'error');
     console.error(e);
@@ -8906,9 +8957,8 @@ function runAnalysis(){
           const el = document.getElementById(id);
           if(el) el.value = '';
         });
-        // Close the OCR text editor section back to its default collapsed state
-        const section = document.getElementById('rx-text-section');
-        if(section) section.open = false;
+        // Close all FAB panels back to their default hidden state
+        if(typeof window.rxCloseAllPanels === 'function') window.rxCloseAllPanels();
         // Reset in-memory vars (defensive)
         if(typeof rxImageFile !== 'undefined') rxImageFile = null;
         if(typeof rxLastObjectUrl !== 'undefined' && rxLastObjectUrl){
@@ -8984,32 +9034,135 @@ const RX_QUICK_ADD_CHIPS = [
       const cur = ta.value.trim();
       // Append on its own line so the analyzer picks it up cleanly
       ta.value = (cur ? cur + '\n' : '') + c.text;
-      // Open the editor + re-analyze
-      const section = document.getElementById('rx-text-section');
-      if(section) section.open = true;
+      // Open the edit panel briefly so the user can see what was added, then run analysis
+      if(typeof window.rxOpenPanel === 'function') window.rxOpenPanel('rx-panel-edit');
       runAnalysis();
     });
   });
 })();
 
-/* Page-load safety: force both tool details CLOSED so mobile browsers that restore
-   form-state or open-attribute from history can't leave them expanded. Runs once on
-   parse, again on DOMContentLoaded if available. */
-(function forceCloseTools(){
-  function closeAll(){
-    const a = document.getElementById('rx-text-section');
-    const b = document.getElementById('rx-quick-add');
-    if(a) a.open = false;
-    if(b) b.open = false;
+/* JS-CONTROLLED FAB TOGGLE — replaces the old <details>-based collapsible toolbar.
+   Panels are real <div hidden> elements. JS shows/hides them via the `hidden` attribute
+   and the .rx-open class. This is bulletproof on every mobile browser because there are
+   no <details> quirks. */
+(function wireFabToggles(){
+  function openPanel(id){
+    const p = document.getElementById(id);
+    const fab = document.querySelector('.rx-fab[data-target="'+id+'"]');
+    if(!p) return;
+    p.hidden = false;
+    p.classList.add('rx-open');
+    if(fab) fab.setAttribute('aria-expanded','true');
   }
+  function closePanel(id){
+    const p = document.getElementById(id);
+    const fab = document.querySelector('.rx-fab[data-target="'+id+'"]');
+    if(!p) return;
+    p.hidden = true;
+    p.classList.remove('rx-open');
+    if(fab) fab.setAttribute('aria-expanded','false');
+  }
+  function closeAll(){ closePanel('rx-panel-edit'); closePanel('rx-panel-add'); }
+  // Expose for the rest of the app (reset, OCR completion, quick-chip click)
+  window.rxOpenPanel  = openPanel;
+  window.rxClosePanel = closePanel;
+  window.rxCloseAllPanels = closeAll;
+  // Wire FAB buttons
+  document.querySelectorAll('.rx-fab').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.preventDefault();
+      const id = btn.dataset.target;
+      const p = document.getElementById(id);
+      if(p && p.hidden){
+        // Open this one, close any other open panel
+        closeAll();
+        openPanel(id);
+      } else {
+        closePanel(id);
+      }
+    });
+  });
+  // Wire close (×) buttons
+  document.querySelectorAll('.rx-panel-close').forEach(btn=>{
+    btn.addEventListener('click', e=>{
+      e.preventDefault();
+      closePanel(btn.dataset.close);
+    });
+  });
+  // Force-close on page load / restore (bfcache safety)
   closeAll();
   if(document.readyState !== 'complete'){
     document.addEventListener('DOMContentLoaded', closeAll, { once:true });
     window.addEventListener('load', closeAll, { once:true });
   }
-  // Also close on bfcache restore (mobile Safari/Chrome restore page from cache)
   window.addEventListener('pageshow', e => { if(e.persisted) closeAll(); });
+})();
+
+/* URL HASH AUTO-ANALYZE — for the OneGlance EMR bookmarklet integration.
+   When the page is opened with #text=<base64-encoded prescription text>, decode it,
+   pre-fill the textarea, and run analysis automatically. */
+(function autoAnalyzeFromHash(){
+  function tryAuto(){
+    try {
+      const h = window.location.hash || '';
+      const m = h.match(/[#&]text=([^&]+)/);
+      if(!m) return false;
+      const raw = decodeURIComponent(m[1]);
+      // Support both base64 and plain encoded text
+      let text;
+      try { text = atob(raw); } catch(e) { text = raw; }
+      const ta = document.getElementById('rx-text');
+      if(!ta) return false;
+      ta.value = text;
+      // Switch to Rx Analyzer tab if not already
+      const tab = document.querySelector('.tab[data-tab="rx"]');
+      if(tab && !tab.classList.contains('active')) tab.click();
+      // Run analysis once DOM is ready
+      setTimeout(()=>{ try{ runAnalysis(); }catch(e){ console.warn(e); } }, 300);
+      return true;
+    } catch(e) { console.warn('autoAnalyzeFromHash failed:', e); }
+    return false;
+  }
+  if(document.readyState === 'complete') tryAuto();
+  else {
+    window.addEventListener('load', tryAuto, { once:true });
+    document.addEventListener('DOMContentLoaded', tryAuto, { once:true });
+  }
+  // Also handle hash changes (if bookmarklet refreshes the same window)
+  window.addEventListener('hashchange', tryAuto);
+})();
+
+/* POSTMESSAGE LIVE FEED — for the OneGlance Chrome extension.
+   The extension's content script iframes this page into a side panel on the EMR, then sends
+   the scraped prescription text via postMessage on every DOM change. We listen, debounce,
+   and re-run analysis automatically. No clicks needed — true live updates. */
+(function postMessageLiveFeed(){
+  let debounceTimer = null;
+  let lastText = '';
+  window.addEventListener('message', (e)=>{
+    try {
+      const data = e.data;
+      if(!data || typeof data !== 'object') return;
+      if(data.type !== 'rx-live-feed') return;
+      const text = String(data.text || '');
+      if(text === lastText) return;          // skip identical updates
+      if(text.trim().length < 4) return;     // skip empty / near-empty
+      lastText = text;
+      clearTimeout(debounceTimer);
+      debounceTimer = setTimeout(()=>{
+        const ta = document.getElementById('rx-text');
+        if(!ta) return;
+        ta.value = text;
+        try{ runAnalysis(); }catch(err){ console.warn('runAnalysis from postMessage failed:', err); }
+        // Acknowledge so the extension can show "live" indicator
+        try { e.source.postMessage({type:'rx-live-ack', ts:Date.now()}, '*'); } catch(_){}
+      }, 350);  // 350ms debounce so we don't re-analyse on every keystroke
+    } catch(err){ console.warn('postMessage handler error:', err); }
+  });
+  // Tell any parent (the extension iframe wrapper) that we're ready to receive
+  try { window.parent.postMessage({type:'rx-live-ready', ts:Date.now()}, '*'); } catch(_){}
 })();
 </script>
 </body>
 </html>
+
