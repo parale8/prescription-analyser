@@ -349,6 +349,9 @@
   .rx-crit-do::before{content:"→ ";color:#86efac;font-weight:700}
   .rx-crit-why{margin-top:5px;color:#fde68a;font-size:12px;line-height:1.45;background:rgba(251,191,36,0.05);border-left:2px solid rgba(251,191,36,0.4);padding:4px 9px;border-radius:3px}
   .rx-crit-mech{margin-top:5px;color:#94a3b8;font-size:11px;line-height:1.4;font-style:italic}
+  .rx-crit-mech ul{font-style:normal}
+  .rx-crit-mech ul li{margin:2px 0;color:#cbd5e1}
+  .rx-crit-alt{margin-top:5px;color:#dbeafe;font-size:12.5px;line-height:1.5;background:rgba(96,165,250,0.08);border-left:2px solid rgba(96,165,250,0.5);padding:5px 9px;border-radius:3px;font-weight:500}
   .rx-bullet-badge{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;opacity:0.95}
   .rx-bullet-badge.b-contra{background:rgba(248,113,113,0.18);color:#fca5a5;border:1px solid rgba(248,113,113,0.4)}
   .rx-bullet-badge.b-major{background:rgba(251,191,36,0.15);color:#fcd34d;border:1px solid rgba(251,191,36,0.4)}
@@ -1562,16 +1565,17 @@ const rules = [
     mech:['CYP3A4 inhibition (potent)'],
     effect:'Marked rise in simvastatin exposure (10-20x); high risk of myopathy and rhabdomyolysis.',
     mgmt:'Contraindicated. Hold simvastatin during clarithromycin course or switch to azithromycin.' },
-  { cv:'simvastatin', inter:'erythromycin', sev:'CONTRA',
-    mech:['CYP3A4 inhibition (potent)'],
-    effect:'Same as clarithromycin: rhabdomyolysis risk.',
-    mgmt:'Avoid combination. Hold simvastatin or use a non-CYP3A4 statin.' },
+  { cv:'simvastatin', inter:'erythromycin', sev:'CONTRA', alt:'Azithromycin (negligible CYP3A4 effect); or switch statin to rosuvastatin/pravastatin/pitavastatin',
+    mech:['Erythromycin is a strong CYP3A4 inhibitor — magnitude similar to clarithromycin','↑Simvastatin AUC ~10× → muscle toxicity'],
+    effect:'Marked rise in simvastatin exposure with high risk of myopathy and rhabdomyolysis.',
+    mgmt:'Avoid the combination. Hold simvastatin during erythromycin course, or substitute azithromycin (no clinically significant CYP3A4 inhibition). If statin must continue, switch to a non-CYP3A4 statin (rosuvastatin, pravastatin, pitavastatin).' },
   { cv:'lovastatin',  inter:'clarithromycin', sev:'CONTRA',
     mech:['CYP3A4 inhibition (potent)'], effect:'Marked ↑lovastatin exposure → rhabdomyolysis.',
     mgmt:'Contraindicated. Hold lovastatin or switch antibiotic.' },
-  { cv:'lovastatin',  inter:'erythromycin', sev:'CONTRA',
-    mech:['CYP3A4 inhibition (potent)'], effect:'See above.',
-    mgmt:'Avoid combination.' },
+  { cv:'lovastatin',  inter:'erythromycin', sev:'CONTRA', alt:'Azithromycin (negligible CYP3A4 effect); or switch statin to rosuvastatin/pravastatin/pitavastatin',
+    mech:['Erythromycin is a strong CYP3A4 inhibitor','↑Lovastatin AUC ~10× → muscle toxicity'],
+    effect:'Marked rise in lovastatin exposure with high risk of myopathy and rhabdomyolysis.',
+    mgmt:'Avoid combination. Substitute azithromycin (no clinically significant CYP3A4 effect) or switch statin.' },
   { cv:'atorvastatin', inter:'clarithromycin', sev:'MAJOR',
     mech:['CYP3A4 inhibition'],
     effect:'~4-fold ↑atorvastatin AUC. Dose-dependent myopathy risk.',
@@ -1589,13 +1593,18 @@ const rules = [
     mech:['CYP3A4 inhibition (potent)'],
     effect:'10-20x ↑simvastatin AUC; rhabdomyolysis risk.',
     mgmt:'Contraindicated. Use rosuvastatin/pravastatin/pitavastatin instead during course.' },
-  { cv:'lovastatin', inter:'itraconazole', sev:'CONTRA',
-    mech:['CYP3A4 inhibition (potent)'], effect:'See above.',
-    mgmt:'Contraindicated.' },
-  { cv:'simvastatin', inter:'ketoconazole', sev:'CONTRA',
-    mech:['CYP3A4 inhibition (potent)'], effect:'Same as itraconazole.', mgmt:'Avoid.' },
-  { cv:'lovastatin',  inter:'ketoconazole', sev:'CONTRA',
-    mech:['CYP3A4 inhibition (potent)'], effect:'Same as itraconazole.', mgmt:'Avoid.' },
+  { cv:'lovastatin', inter:'itraconazole', sev:'CONTRA', alt:'Switch statin to rosuvastatin or pravastatin (non-CYP3A4); or fluconazole (weaker CYP3A4 inhibition) only with statin dose cap',
+    mech:['Itraconazole is a strong CYP3A4 inhibitor','↑Lovastatin AUC 10–20× → rhabdomyolysis'],
+    effect:'10-20× rise in lovastatin AUC; rhabdomyolysis risk.',
+    mgmt:'Contraindicated. Use rosuvastatin/pravastatin/pitavastatin during antifungal course.' },
+  { cv:'simvastatin', inter:'ketoconazole', sev:'CONTRA', alt:'Rosuvastatin or pravastatin (non-CYP3A4 statins)',
+    mech:['Ketoconazole is a strong CYP3A4 inhibitor (similar potency to itraconazole)','↑Simvastatin AUC 10–20× → rhabdomyolysis'],
+    effect:'10-20× rise in simvastatin AUC; rhabdomyolysis risk.',
+    mgmt:'Avoid combination. Switch to a non-CYP3A4 statin or hold simvastatin during antifungal course.' },
+  { cv:'lovastatin',  inter:'ketoconazole', sev:'CONTRA', alt:'Rosuvastatin or pravastatin (non-CYP3A4 statins)',
+    mech:['Ketoconazole is a strong CYP3A4 inhibitor','↑Lovastatin AUC 10–20× → rhabdomyolysis'],
+    effect:'10-20× rise in lovastatin AUC; rhabdomyolysis risk.',
+    mgmt:'Avoid combination. Switch to a non-CYP3A4 statin or hold lovastatin during antifungal course.' },
   { cv:'atorvastatin', interCls:'Azole antifungal', sev:'MAJOR',
     mech:['CYP3A4 inhibition'], effect:'↑Atorvastatin levels; myopathy risk.',
     mgmt:'Cap atorvastatin dose; consider holding during course.' },
@@ -1793,15 +1802,17 @@ const rules = [
     effect:'Reduced antiplatelet effect; FDA boxed warning. Outcome data mixed but pharmacodynamic effect is established.',
     mgmt:'Use pantoprazole (preferred), famotidine, or separate dosing by ≥12 h if PPI required.' },
   { cv:'clopidogrel', inter:'esomeprazole', sev:'MOD',
-    mech:['CYP2C19 inhibition'], effect:'Same as omeprazole.',
-    mgmt:'Switch to pantoprazole or H2 blocker.' },
+    mech:['Esomeprazole is a potent CYP2C19 inhibitor (similar potency to omeprazole, its S-enantiomer parent)','↓Conversion of clopidogrel prodrug to its active thiol metabolite'],
+    effect:'~30–40% reduction in active metabolite levels; reduced platelet inhibition. FDA boxed warning extends to esomeprazole. Pharmacodynamic effect is well-established; outcome data is mixed.',
+    mgmt:'Switch to pantoprazole (minimal CYP2C19 inhibition, preferred PPI in DAPT) or famotidine. If esomeprazole must continue, separate dosing by ≥12 h.' },
   { cv:'clopidogrel', inter:'pantoprazole', sev:'MINOR',
     mech:['Minimal CYP2C19 inhibition'],
     effect:'No clinically significant reduction in active metabolite.',
     mgmt:'Preferred PPI for clopidogrel patients.' },
   { cv:'clopidogrel', inter:'lansoprazole', sev:'MOD',
-    mech:['CYP2C19 inhibition'], effect:'Modest ↓active metabolite.',
-    mgmt:'Pantoprazole preferred.' },
+    mech:['Lansoprazole is a moderate CYP2C19 inhibitor','↓Activation of clopidogrel prodrug'],
+    effect:'Modest reduction in active metabolite formation; intermediate effect (less than omeprazole/esomeprazole but more than pantoprazole).',
+    mgmt:'Pantoprazole preferred PPI in DAPT (minimal CYP2C19 effect). Famotidine is the safest H2 blocker alternative.' },
   { cv:'clopidogrel', inter:'cimetidine', sev:'MOD',
     mech:['CYP2C19/3A4 inhibition'], effect:'Possible ↓active metabolite formation.',
     mgmt:'Use famotidine instead.' },
@@ -8159,10 +8170,13 @@ function rxFindConditions(text){
   const T    = ' ' + lower.replace(/[\n,;:()\/\\\[\]{}"'!?<>]/g,' ').replace(/\s+/g,' ') + ' ';
   const Traw = ' ' + lower.replace(/[\n,;:()\\\[\]{}"'!?<>]/g,' ').replace(/\s+/g,' ') + ' ';
   // Diagnosis-context window — collect text following diagnosis/history markers.
-  // 800-char window after each marker. Common Indian EMR patterns:
+  // 800-char window after each marker. Common Indian EMR patterns.
+  // EXCLUDED: "c/o" (complains of), "complaints", "present illness", "chief complaint"
+  // — those are SYMPTOMS, not confirmed diagnoses.
+  // INCLUDED: confirmed-diagnosis markers AND historical disease markers:
   // "Diagnosis:", "Dx:", "D/x:", "Impression:", "Problem list:", "Past Hx",
-  // "H/O", "History of", "Hx:", "k/c/o" (known case of), "c/o" (complains of)
-  const _dxRe = /(?:diagnosis|dx|d\/x|impression|problem list|past history|past hx|h\/o|history of|hx|k\/c\/o|c\/o|known case of)\s*[:\-]?\s*([^\n]{0,800})/gi;
+  // "H/O" (history of disease), "History of", "Hx:", "k/c/o" (known case of)
+  const _dxRe = /(?:diagnosis|dx|d\/x|impression|problem list|past history|past hx|h\/o|history of|hx|k\/c\/o|known case of|assessment)\s*[:\-]?\s*([^\n]{0,800})/gi;
   const _dxParts = []; let _m;
   while((_m = _dxRe.exec(lower)) !== null){ _dxParts.push(_m[1]); }
   // Discharge-summary style: "Acute LVF with HTN with DM with CKD" — capture
@@ -8357,6 +8371,69 @@ function asInteractor(icuDrug){
   if(!mappedId) return null;
   return interactors.find(x=>x.id===mappedId);
 }
+
+/* Vague-rule auto-expander.
+   Many cv×interactor rules use "Same as X" / "See above" / "As for Y" shorthand.
+   For each detected interaction with vague text, look up sibling rules (same drug
+   pair OR same class pair) to find concrete mech/effect/mgmt strings and merge.
+   The goal: every flagged interaction renders with a SPECIFIC mechanism and a
+   concrete management line (with alternative drug when possible). */
+const RX_VAGUE_RE = /^(?:same(?:\s+as\s+\S+)?\.?|see\s+(?:above|prev\w*)\.?|as\s+for\s+\S+\.?|as\s+above\.?|same\s+precaution[s]?\.?|avoid\.?)$/i;
+function isVague(s){ return !s || RX_VAGUE_RE.test(String(s).trim()); }
+function isVagueMech(mech){
+  if(!mech || !mech.length) return true;
+  return mech.every(m => RX_VAGUE_RE.test(String(m).trim()));
+}
+function rxEnrichInteraction(r, cvDrug, interDrug){
+  if(!r || r._enriched) return r;
+  const out = Object.assign({}, r);
+  // If mech is vague, hunt for a related rule with concrete mech
+  const cvCls = cvDrug && cvDrug.cls;
+  const interCls = interDrug && (interDrug.cls || interDrug.group);
+  if(isVagueMech(out.mech)){
+    // Try: same class pair with non-vague mech
+    const sib = rules.find(x =>
+      x !== r &&
+      ((x.cv && cvDrug && x.cv === cvDrug.id) || (x.cvCls && x.cvCls === cvCls)) &&
+      ((x.inter && interDrug && x.inter === interDrug.id) || (x.interCls && x.interCls === interCls)) &&
+      !isVagueMech(x.mech)
+    );
+    if(sib){
+      out.mech = sib.mech.slice();
+      if(isVague(out.effect)) out.effect = sib.effect;
+      if(isVague(out.mgmt)) out.mgmt = sib.mgmt;
+      if(!out.alt && sib.alt) out.alt = sib.alt;
+    }
+  }
+  if(isVague(out.effect)){
+    const sib = rules.find(x =>
+      x !== r &&
+      ((x.cv && cvDrug && x.cv === cvDrug.id) || (x.cvCls && x.cvCls === cvCls)) &&
+      ((x.inter && interDrug && x.inter === interDrug.id) || (x.interCls && x.interCls === interCls)) &&
+      !isVague(x.effect)
+    );
+    if(sib) out.effect = sib.effect;
+  }
+  if(isVague(out.mgmt)){
+    const sib = rules.find(x =>
+      x !== r &&
+      ((x.cv && cvDrug && x.cv === cvDrug.id) || (x.cvCls && x.cvCls === cvCls)) &&
+      ((x.inter && interDrug && x.inter === interDrug.id) || (x.interCls && x.interCls === interCls)) &&
+      !isVague(x.mgmt)
+    );
+    if(sib){
+      out.mgmt = sib.mgmt;
+      if(!out.alt && sib.alt) out.alt = sib.alt;
+    }
+  }
+  // Final fallback: include drug names in vague mech so it's not empty
+  if(isVagueMech(out.mech)){
+    out.mech = [(cvCls||'this drug') + ' × ' + (interCls||'the co-administered drug') + ' interaction'];
+  }
+  out._enriched = true;
+  return out;
+}
+
 function rxAnalyze(detectedDrugs, detectedConds){
   const findings = { interactions:[], comorbidity:[] };
   // 1) All drug-pair interactions
@@ -8365,22 +8442,22 @@ function rxAnalyze(detectedDrugs, detectedConds){
       if(i>=j) return; // unique pairs
       // CV × interactor
       if(a.type==='cv' && b.type==='inter'){
-        const r = resolve(a.drug, b.drug);
+        const r = rxEnrichInteraction(resolve(a.drug, b.drug), a.drug, b.drug);
         if(SEV_RANK[r.sev]>=2) findings.interactions.push({drugA:a, drugB:b, r});
       } else if(b.type==='cv' && a.type==='inter'){
-        const r = resolve(b.drug, a.drug);
+        const r = rxEnrichInteraction(resolve(b.drug, a.drug), b.drug, a.drug);
         if(SEV_RANK[r.sev]>=2) findings.interactions.push({drugA:b, drugB:a, r});
       } else if(a.type==='cv' && b.type==='icu'){
         // Check if the ICU drug has an interactor equivalent (INH, rifampin, IV clarithro, etc.)
         const interactor = asInteractor(b.drug);
         if(interactor){
-          const r = resolve(a.drug, interactor);
+          const r = rxEnrichInteraction(resolve(a.drug, interactor), a.drug, interactor);
           if(SEV_RANK[r.sev]>=2) findings.interactions.push({drugA:a, drugB:b, r});
         }
       } else if(b.type==='cv' && a.type==='icu'){
         const interactor = asInteractor(a.drug);
         if(interactor){
-          const r = resolve(b.drug, interactor);
+          const r = rxEnrichInteraction(resolve(b.drug, interactor), b.drug, interactor);
           if(SEV_RANK[r.sev]>=2) findings.interactions.push({drugA:b, drugB:a, r});
         }
       }
@@ -8573,7 +8650,13 @@ function rxRenderResults(detectedDrugs, detectedConds, findings){
         const bName = b.name || it.drugB.id;
         const aCls  = a.cls  || '';
         const bCls  = b.cls  || '';
-        const mech  = (it.r.mech||[]).join(' · ');
+        // Mechanism: render as bullet list when multiple items, plain otherwise
+        const mechArr = (it.r.mech||[]).filter(Boolean);
+        const mechHtml = mechArr.length === 0 ? ''
+          : mechArr.length === 1 ? `<div class="rx-crit-mech">Mechanism: ${escapeHtml(mechArr[0])}</div>`
+          : `<div class="rx-crit-mech"><strong>Mechanism:</strong><ul style="margin:3px 0 0 16px;padding:0">${mechArr.map(m=>`<li>${escapeHtml(m)}</li>`).join('')}</ul></div>`;
+        // Alternatives: derived from mgmt text — if mgmt mentions "Use X" / "preferred" / "Switch to" / "Instead of", surface as a separate alt line
+        const altHtml = it.r.alt && it.r.alt!=='-' ? `<div class="rx-crit-alt">💡 Alternative: ${escapeHtml(it.r.alt)}</div>` : '';
         html += `
           <div class="rx-crit-card ${cardCls}">
             <div class="rx-crit-pair-row">
@@ -8589,8 +8672,9 @@ function rxRenderResults(detectedDrugs, detectedConds, findings){
               <span class="rx-bullet-badge ${badgeCls}" style="margin-left:auto;align-self:flex-start">${escapeHtml(sevLabel)}</span>
             </div>
             ${it.r.mgmt   ? `<div class="rx-crit-do">${escapeHtml(it.r.mgmt)}</div>` : ''}
+            ${altHtml}
             ${it.r.effect ? `<div class="rx-crit-why">${escapeHtml(it.r.effect)}</div>` : ''}
-            ${mech ? `<div class="rx-crit-mech">${escapeHtml(mech)}</div>` : ''}
+            ${mechHtml}
           </div>
         `;
       } else {
@@ -8679,27 +8763,10 @@ function rxRenderResults(detectedDrugs, detectedConds, findings){
         <div class="rx-drug-body">
     `;
 
-    // ----- Interactions as bullets -----
-    if(g.interactions.length){
-      html += `<div class="rx-section-head">⚠ Interactions (${g.interactions.length})</div><ul class="rx-bullets">`;
-      g.interactions.sort((x,y)=>SEV_RANK[y.r.sev]-SEV_RANK[x.r.sev]).forEach(item => {
-        const other = item.other.drug;
-        const r = item.r;
-        const mechShort = (r.mech||[]).join(' · ') || 'mechanism not specified';
-        html += `
-          <li class="${sevBulletClass(r.sev)}">
-            <div class="rx-bullet-head">
-              <div class="rx-bullet-target">${escapeHtml(other.name)}<span class="sub">${escapeHtml(other.cls)}</span></div>
-              <span class="rx-bullet-badge ${sevBadgeClass(r.sev)}">${escapeHtml(shortSev(r.sev))}</span>
-            </div>
-            ${r.mgmt   ? `<div class="rx-bullet-do">${escapeHtml(r.mgmt)}</div>` : ''}
-            ${r.effect ? `<div class="rx-bullet-why">${escapeHtml(r.effect)}</div>` : ''}
-            <div class="rx-bullet-mech">${escapeHtml(mechShort)}</div>
-          </li>
-        `;
-      });
-      html += `</ul>`;
-    }
+    // Drug-drug interactions are now shown ONLY in the top "Critical findings"
+    // section as deduplicated side-by-side pairs. Per-drug cards used to list
+    // each interaction twice (once under each drug) which the user reported as
+    // confusing repetition. Per-drug cards now show ONLY comorbidity dosing.
 
     // ----- Comorbidity dose adjustments as bullets — PROMINENT label -----
     if(g.comorbidity.length){
