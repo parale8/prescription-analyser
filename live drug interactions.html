@@ -8147,21 +8147,28 @@ function rxFindDrugs(text){
 
 function rxFindConditions(text){
   const found = new Set();
-  // Conditions that must appear specifically in a diagnosis/history line.
-  // Without gating, OneGlance dropdown menu items (e.g. "Hypothyroidism", "Anemia")
-  // triggered false-positive diagnoses for patients who didn't have them.
-  const _gated = new Set(['thyroid_hypo', 'thyroid_hyper', 'anemia']);
+  // ALL clinical conditions must appear in a diagnosis/history line context.
+  // Without this gating, OneGlance dropdown menus, suggested-diagnosis lists,
+  // and template options (e.g. "Diabetes", "VT", "Hypothyroidism" appearing
+  // as menu items) triggered false-positive diagnoses.
+  // Only 'elderly' is ungated — it's detected by a separate age regex below.
+  const _ungated = new Set(['elderly']);
   // Two versions: T has punctuation replaced with space (clean tokens);
   // Traw keeps "/" so age forms like "89/M" can be matched separately.
   const lower = text.toLowerCase();
   const T    = ' ' + lower.replace(/[\n,;:()\/\\\[\]{}"'!?<>]/g,' ').replace(/\s+/g,' ') + ' ';
   const Traw = ' ' + lower.replace(/[\n,;:()\\\[\]{}"'!?<>]/g,' ').replace(/\s+/g,' ') + ' ';
-  // Diagnosis-context window for gated conditions — collect text following
-  // diagnosis/history markers up to end of line. Only this slice is checked
-  // for gated conditions.
-  const _dxRe = /(?:diagnosis|dx|d\/x|impression|problem list|past history|past hx|h\/o|history of|hx)\s*[:\-]?\s*([^\n]{0,600})/gi;
+  // Diagnosis-context window — collect text following diagnosis/history markers.
+  // 800-char window after each marker. Common Indian EMR patterns:
+  // "Diagnosis:", "Dx:", "D/x:", "Impression:", "Problem list:", "Past Hx",
+  // "H/O", "History of", "Hx:", "k/c/o" (known case of), "c/o" (complains of)
+  const _dxRe = /(?:diagnosis|dx|d\/x|impression|problem list|past history|past hx|h\/o|history of|hx|k\/c\/o|c\/o|known case of)\s*[:\-]?\s*([^\n]{0,800})/gi;
   const _dxParts = []; let _m;
   while((_m = _dxRe.exec(lower)) !== null){ _dxParts.push(_m[1]); }
+  // Discharge-summary style: "Acute LVF with HTN with DM with CKD" — capture
+  // chains of "with" connectors that are characteristic of clinical narratives.
+  const _withRe = /\b((?:acute|chronic|severe|mild|moderate|post|h\/o|with|cad)[^\n]{0,500})/gi;
+  while((_m = _withRe.exec(lower)) !== null){ _dxParts.push(_m[1]); }
   const Tdx = ' ' + _dxParts.join(' ').replace(/[,;:()\/\\\[\]{}"'!?<>]/g,' ').replace(/\s+/g,' ') + ' ';
   // For short patterns (≤5 chars and all-letter), require word boundary to avoid false positives
   // (e.g. "ild" inside "sildenafil").
@@ -8174,7 +8181,8 @@ function rxFindConditions(text){
     return hay.includes(p);
   }
   RX_COND_KEYWORDS.forEach(({id, patterns})=>{
-    const gated = _gated.has(id);
+    // Gate ALL conditions to diagnosis context UNLESS explicitly ungated.
+    const gated = !_ungated.has(id);
     for(const p of patterns){
       if(patternMatches(p, gated)) { found.add(id); break; }
     }
