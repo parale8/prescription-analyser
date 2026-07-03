@@ -7690,6 +7690,41 @@ const RX_COMBO_BRANDS = {
 };
 
 /* ================================================================
+   BRAND-COLLISION DISAMBIGUATION (2026-07-03)
+   Indian pharma has many similarly-spelled brands that different companies
+   assigned to totally different drugs. Fuzzy matching (Levenshtein ≤ 2)
+   collides these. Explicit entries here suppress the fuzzy match by taking
+   the exact-match slot before fuzzy runs.
+   Format: brand → correct drug id(s). */
+Object.assign(RX_COMBO_BRANDS, {
+  // Cardarone (Cadila) is ATENOLOL — NOT Cordarone (Sanofi) which is amiodarone.
+  // The 1-letter difference caused a fuzzy match to amiodarone.
+  'cardarone': ['atenolol'],
+  // Explicitly bind common confusable brand pairs that fuzzy-collide with
+  // critical CV drugs (warfarin, amiodarone, digoxin, sildenafil).
+  'cordace':   ['ramipril'],       // (fuzzy-collides with cordarone)
+  'cardace':   ['ramipril'],       // canonical ramipril brand
+  'cardazem':  ['diltiazem'],
+  'cordex':    ['dexamethasone'],  // NOT cordarone
+
+  // ================================================================
+  // GLP-1 receptor agonists — Indian brands of semaglutide
+  // Per Dr. Parale's request (2026-07-03).
+  // ================================================================
+  'sematrinity':  ['semaglutide'],
+  'usema':        ['semaglutide'],
+  'sundae':       ['semaglutide'],
+  'ozempic':      ['semaglutide'],   // Novo Nordisk originator (once-weekly SC)
+  'rybelsus':     ['semaglutide'],   // Oral semaglutide (Novo Nordisk)
+  'wegovy':       ['semaglutide'],   // Higher-dose semaglutide (obesity)
+  'semaglide':    ['semaglutide'],
+  'seglur':       ['semaglutide'],
+  'semirox':      ['semaglutide'],
+  'semasure':     ['semaglutide'],
+  'sematril':     ['semaglutide'],
+});
+
+/* ================================================================
    AUTO-INJECTED FROM DRUG LIBRARY.xlsx (2026-07-03) — Dr. Parale
    Adds 2022 brand → generic mappings (1137 single-drug, 885 FDC)
    Any existing entries with the same key are PRESERVED (not overwritten). */
@@ -9893,6 +9928,43 @@ function rxResolveDrugId(id){
 function rxFindDrugs(text){
   const found = new Map(); // id+type → entry
   const T = ' ' + text.toLowerCase() + ' ';
+
+  // ================================================================
+  // GENERIC-FIRST PRINCIPLE (per Dr. Parale, 2026-07-03):
+  //   If the prescription contains an explicit generic/pharmacological name
+  //   (e.g. inside a "Composition: (Atorvastatin 20 mg)" line), USE THAT.
+  //   Brand-name lookup is only a fallback for prescriptions that list
+  //   brand only (no composition).
+  //   This is enforced in two ways:
+  //     (a) Pass 1 (below) scans generic drug IDs FIRST — exact matches on
+  //         pharmacological names like 'atorvastatin', 'metoprolol', 'sacubitril'.
+  //     (b) The later fuzzy-brand-token pass is GUARDED — it will NOT overwrite
+  //         a generic-first detection and will NOT fire on a token whose exact
+  //         brand mapping (in RX_COMBO_BRANDS) already points to a different drug.
+  // ================================================================
+  // Pass 1 (GENERIC-FIRST) — scan for pharmacological/generic drug names verbatim.
+  // These are the most authoritative signals in any prescription.
+  const _genericNames = new Set();
+  [cvDrugs, icuDrugs, interactors].forEach(list => list.forEach(d => {
+    // Add the drug id as a lowercase word to match (already lowercase)
+    if(d.id && d.id.length >= 4 && /^[a-z_]+$/.test(d.id)) _genericNames.add(d.id);
+    // Also add the name field (e.g. "Sacubitril + valsartan" → "sacubitril", "valsartan")
+    if(d.name){
+      d.name.toLowerCase().split(/[\s+\/,()]+/).forEach(part => {
+        if(part.length >= 5 && /^[a-z]+$/.test(part)) _genericNames.add(part);
+      });
+    }
+  }));
+  _genericNames.forEach(gname => {
+    if(T.includes(' '+gname+' ') || T.includes(' '+gname+',') || T.includes(' '+gname+'.')){
+      const entry = rxResolveDrugId(gname);
+      if(entry){
+        const key = entry.id+'|'+entry.type;
+        if(!found.has(key)) found.set(key, {...entry, matched:gname, brand:'(pharmacological name)', generic:true});
+      }
+    }
+  });
+
   // 0) FDC combo brand expansion — scan for each combo brand in text; if found, add all components
   // Done first because longer brand-name patterns (e.g. "rozudose gold") should be detected before
   // the token pass alone might catch "rozudose" → rosuvastatin and miss the rest.
@@ -9947,6 +10019,11 @@ function rxFindDrugs(text){
     // the brand "Tamlet" (tamsulosin) — without this list, every prescription would falsely
     // flag tamsulosin. Words here also cover Rx headers, lab labels, signature phrases.
     if(RX_FUZZY_STOPWORDS.has(n)) return;
+    // SKIP FUZZY if token already matches an exact key in RX_COMBO_BRANDS.
+    // Prevents e.g. "cardarone" (Cadila atenolol brand) from fuzzy-matching to
+    // "cordarone" (Sanofi amiodarone) at Levenshtein-1 after having ALREADY been
+    // resolved to atenolol via RX_COMBO_BRANDS.
+    if(RX_COMBO_BRANDS[n] || RX_COMBO_BRANDS[' '+n+' '] || RX_COMBO_BRANDS[tok]) return;
     // 3) FUZZY match (Levenshtein distance ≤2 for tokens ≥6 chars, ≤1 for 4-5 chars)
     // This handles OCR errors in handwriting and typos like "Atorvastatum" → "atorvastatin"
     if(n.length >= 6){
@@ -10147,6 +10224,10 @@ function rxFindDrugs(text){
     for(const tok of alphaTokens){
       if(tok.length < needle.length - 2 || tok.length > needle.length + 2) continue;
       if(tok[0] !== needle[0]) continue; // require first char exact — kills cross-word matches
+      // SKIP if the token itself is an exact key in RX_COMBO_BRANDS with a DIFFERENT
+      // drug id — prevents "Cardarone" (Cadila atenolol) from fuzzy-matching to
+      // "Cordarone" (Sanofi amiodarone) needle at Levenshtein-1.
+      if(RX_COMBO_BRANDS[tok] && !RX_COMBO_BRANDS[tok].includes(drugId)) continue;
       const d = rxLevenshtein(tok, needle);
       if(d <= maxDist){
         found.set(key, {...entry, matched:tok, brand:label+' (fuzzy token, d='+d+')'});
