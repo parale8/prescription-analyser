@@ -1479,6 +1479,7 @@ const interactors = [
   { id:'folate',         name:'Folic acid',     cls:'Vitamin', group:'Supplement' },
   { id:'vit_k_oral',     name:'Vitamin K (oral)',cls:'Vitamin', group:'Supplement' },
   { id:'k_citrate',      name:'Potassium citrate (urine alkalinizer)', cls:'Alkalinizer', group:'Supplement' },
+  { id:'pyridoxine',     name:'Vitamin B6 (Pyridoxine)', cls:'Vitamin', group:'Supplement' },
 ];
 
 /* ---------- COMORBIDITIES ---------- */
@@ -7775,7 +7776,6 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
     ['alfazosin',['doxazosin']],
     ['alnavas',['atorvastatin']],
     ['alphadopa',['methyldopa']],
-    ['alsartan',['losartan']],
     ['alsartan -am',['amlodipine','losartan']],
     ['alsartan -h',['losartan','hydrochlorothiazide']],
     ['amace',['amlodipine','enalapril']],
@@ -8032,7 +8032,6 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
     ['betaloc',['metoprolol']],
     ['betaloc-',['metoprolol']],
     ['betaloc-h',['metoprolol','hydrochlorothiazide']],
-    ['betalol-',['nebivolol']],
     ['betalol-h',['hydrochlorothiazide']],
     ['betanase-',['glibenclamide']],
     ['betanif',['atenolol','nifedipine']],
@@ -9160,7 +9159,6 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
     ['primodil',['amlodipine']],
     ['primodil-at',['amlodipine','atenolol']],
     ['primodil-l',['amlodipine','lisinopril']],
-    ['prolol',['propranolol']],
     ['prolol-tr',['propranolol']],
     ['prolomet',['metoprolol']],
     ['prolomet am',['metoprolol','amlodipine']],
@@ -9614,7 +9612,6 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
     ['vasoglor',['ticagrelor']],
     ['vasorta',['telmisartan']],
     ['vasovin -xl',['ntg']],
-    ['vastatin',['simvastatin']],
     ['vazortan-h',['losartan','hydrochlorothiazide']],
     ['velol',['amlodipine','metoprolol']],
     ['velol am',['amlodipine','metoprolol']],
@@ -9754,6 +9751,39 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
     ['zytanix',['metolazone']],
   ].filter(([k]) => !(k in RX_COMBO_BRANDS))
 ));
+
+/* ================================================================
+   BUG FIX (2026-08-17) — Dr. Parale reported false-positive drugs
+   appearing in Critical Findings (e.g. Metoprolol alongside plain
+   Telmisartan; Simvastatin alongside plain Atorvastatin).
+   Root causes, both in the flat-text ("OCR dropped spaces") combo
+   matcher below:
+     1) Tflat() was stripping digits along with punctuation, so e.g.
+        "TELSARTAN 40 MG" flattened to "...telsartanmg...". The
+        pre-existing FDC brand key 'telsartan m' (a real telmisartan+
+        metoprolol combo product) flattens to 'telsartanm', which is
+        a substring of 'telsartanmg' — falsely adding metoprolol to
+        a prescription that only contained plain telmisartan.
+        FIX: Tflat() now preserves digits, so a real dose number
+        between the drug name and its unit ("telsartan40mg") keeps
+        them from fusing together. Brand names genuinely written
+        without a space before a combo suffix (e.g. "TELSARTANM")
+        are unaffected and still match correctly.
+     2) Four leftover fragment/typo entries from the 2022 spreadsheet
+        import were bare substrings of common generic drug names,
+        so they fired on ANY mention of the real drug:
+          'vastatin'  -> simvastatin   (substring of atorvastatin,
+                          rosuvastatin, pravastatin, pitavastatin,
+                          fluvastatin, lovastatin)
+          'alsartan'  -> losartan      (substring of valsartan, and
+                          of the ARNI combo sacubitril/valsartan)
+          'prolol'    -> propranolol   (substring of metoprolol and
+                          bisoprolol)
+          'betalol-'  -> nebivolol     (substring of labetalol)
+        These were not real standalone brand names — removed.
+   A full audit cross-checked every remaining flat-matchable brand
+   key (>=6 letters) against every known generic drug name for this
+   same substring problem; no other unsafe entries were found. */
 
 /* ================================================================
    AUTO-INJECTED FROM DRUG FORMULARY (Apr-2026, updated) — Dr. Parale
@@ -10784,6 +10814,27 @@ Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
   ].filter(([k]) => !(k in RX_COMBO_BRANDS))
 ));
 
+/* ================================================================
+   PYRIDOXINE (Vitamin B6) ADDED (2026-08-17) — Dr. Parale reported
+   "TAB.BELONG" (a pure pyridoxine product) was not being recognized
+   at all. It wasn't a matching bug — pyridoxine simply had no drug
+   id in this app's vocabulary yet (see the new 'pyridoxine' entry
+   added to the interactors list above). Brand keys below cover the
+   formulary's three pure-pyridoxine products, including the fused
+   spelling "BELONG" commonly typed in OneGlance (the formulary's
+   own canonical listing is "B LONG", two words).
+   No interaction rules have been added for pyridoxine — like the
+   existing Vitamin D/B12/folate entries, it will show as recognized
+   with "no flags" unless/until specific interaction data is added. */
+Object.assign(RX_COMBO_BRANDS, Object.fromEntries(
+  [
+    ['belong',['pyridoxine']],
+    ['b long',['pyridoxine']],
+    ['benadon',['pyridoxine']],
+    ['pyricontin',['pyridoxine']],
+  ].filter(([k]) => !(k in RX_COMBO_BRANDS))
+));
+
 // Condition keyword map: text patterns → condition id
 const RX_COND_KEYWORDS = [
   { id:'ckd3',          patterns:['ckd 3','ckd3','ckd-3','stage 3 ckd','ckd stage 3','crcl 30','crcl 35','crcl 40','crcl 45','crcl 50','crcl 55','egfr 30','egfr 35','egfr 40','egfr 45','egfr 50','egfr 55','egfr 59'] },
@@ -11223,7 +11274,7 @@ function rxFindDrugs(text){
     ['lipicard',    'fenofibrate',   'Lipicard'],
   ];
   // Normalize text for substring scan: keep alpha only, remove all spaces/punctuation
-  const Tflat = lower => lower.toLowerCase().replace(/[^a-z]/g,'');
+  const Tflat = lower => lower.toLowerCase().replace(/[^a-z0-9]/g,'');
   const flatText = Tflat(text);
   SUBSTRING_BRAND_WHITELIST.forEach(([needle, drugId, label])=>{
     if(needle.length<5) return;
