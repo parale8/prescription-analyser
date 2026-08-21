@@ -352,6 +352,23 @@
   .rx-crit-mech ul{font-style:normal}
   .rx-crit-mech ul li{margin:2px 0;color:#cbd5e1}
   .rx-crit-alt{margin-top:5px;color:#dbeafe;font-size:12.5px;line-height:1.5;background:rgba(96,165,250,0.08);border-left:2px solid rgba(96,165,250,0.5);padding:5px 9px;border-radius:3px;font-weight:500}
+  /* Side effects by drug — shown ABOVE interactions in the Rx Analyzer output */
+  .rx-se-section{background:#1a1f2e;border:1px solid #2a3441;border-radius:8px;padding:12px 14px;margin:10px 0}
+  .rx-se-head{color:#7dd3fc;font-size:13px;font-weight:700;text-transform:uppercase;letter-spacing:0.06em;margin-bottom:10px}
+  .rx-se-list{display:flex;flex-direction:column;gap:8px}
+  .rx-se-card{background:#0f1419;border:1px solid #232a33;border-radius:6px;padding:9px 12px}
+  .rx-se-drug{display:flex;align-items:baseline;flex-wrap:wrap;gap:6px;margin-bottom:5px}
+  .rx-se-drug-name{color:#e6edf3;font-size:13.5px;font-weight:600}
+  .rx-se-drug-cls{color:#94a3b8;font-size:11px}
+  .rx-se-rows{display:flex;flex-direction:column;gap:4px}
+  .rx-se-row{font-size:12.5px;line-height:1.5;padding:5px 9px;border-radius:3px}
+  .rx-se-tag{display:inline-block;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:0.05em;margin-right:7px;padding:1px 7px;border-radius:8px;vertical-align:1px}
+  .rx-se-common{background:rgba(125,211,252,0.06);border-left:2px solid rgba(125,211,252,0.4)}
+  .rx-se-common .rx-se-tag{background:rgba(125,211,252,0.14);color:#7dd3fc}
+  .rx-se-common .rx-se-items{color:#cbd5e1}
+  .rx-se-serious{background:rgba(251,191,36,0.06);border-left:2px solid rgba(251,191,36,0.45)}
+  .rx-se-serious .rx-se-tag{background:rgba(251,191,36,0.16);color:#fcd34d}
+  .rx-se-serious .rx-se-items{color:#fde68a}
   .rx-bullet-badge{font-size:10px;font-weight:600;padding:2px 9px;border-radius:10px;text-transform:uppercase;letter-spacing:0.06em;white-space:nowrap;opacity:0.95}
   .rx-bullet-badge.b-contra{background:rgba(248,113,113,0.18);color:#fca5a5;border:1px solid rgba(248,113,113,0.4)}
   .rx-bullet-badge.b-major{background:rgba(251,191,36,0.15);color:#fcd34d;border:1px solid rgba(251,191,36,0.4)}
@@ -607,25 +624,10 @@
   <p>CV drugs incl. ARNI, ivabradine, ranolazine, SGLT2i, GLP-1 RAs &middot; ICU formulary &middot; interactions &middot; comorbidity dosing &middot; for clinicians and pharmacists</p>
 </header>
 <div class="container">
-  <div class="legend" data-context="rx">
-    <span class="chip chip-contra">CONTRA &mdash; contraindicated / avoid</span>
-    <span class="chip chip-major">MAJOR &mdash; significant; modify or monitor closely</span>
-    <span class="chip chip-mod">MODERATE &mdash; clinically relevant; consider alternatives</span>
-    <span class="chip chip-minor">MINOR &mdash; theoretical / low impact</span>
-    <span class="chip chip-none">NONE &mdash; none documented</span>
-  </div>
-  <div class="legend" data-context="cond">
-    <span class="chip chip-st-CONTRA">CONTRA &mdash; avoid / contraindicated</span>
-    <span class="chip chip-st-CAUTION">CAUTION &mdash; significant risk</span>
-    <span class="chip chip-st-DOSE">DOSE ADJ &mdash; specific adjustment required</span>
-    <span class="chip chip-st-MONITOR">MONITOR &mdash; extra surveillance</span>
-    <span class="chip chip-st-SAFE">SAFE &mdash; no adjustment</span>
-    <span class="chip chip-st-NA">N/A &mdash; not addressed</span>
-  </div>
-
   <div class="tabs">
     <button class="tab active" data-tab="rx" style="font-weight:800;background:#22c55e;color:#0d1117;border-radius:6px 6px 0 0;padding:10px 18px">📷 Take Photo / Rx Analyzer</button>
     <button class="tab" data-tab="check" style="font-weight:700">★ Check a drug</button>
+    <button class="tab" data-tab="se" style="font-weight:700">💊 Side effects</button>
     <button class="tab" data-tab="matrix" id="tab-matrix-btn">Interactions matrix</button>
     <button class="tab" data-tab="lookup">Pair lookup</button>
     <button class="tab" data-tab="browse">Browse interactions</button>
@@ -667,6 +669,18 @@
       <h3>Dose adjustment in comorbidities <span class="hint">grouped by system</span></h3>
       <div id="dc-cond-groups"></div>
     </div>
+  </div>
+
+  <!-- SIDE EFFECTS TAB -->
+  <div class="tab-pane" id="pane-se" style="display:none">
+    <div class="controls" style="grid-template-columns:1fr;max-width:640px">
+      <div class="control">
+        <label>Pick a medicine to check</label>
+        <input type="text" id="se-drug-input" list="se-drug-list" placeholder="Type to search ANY drug — CV / ICU / antacid / analgesic / antibiotic / antifungal / antiviral / ATT…" autocomplete="off" />
+        <datalist id="se-drug-list"></datalist>
+      </div>
+    </div>
+    <div id="se-drug-card"></div>
   </div>
 
   <!-- RX ANALYZER TAB -->
@@ -1161,6 +1175,25 @@
       <div style="font-size:11.5px;color:var(--muted);margin-top:10px;padding-top:10px;border-top:1px solid var(--border)">
         <b>Tip:</b> Subscribe to FDA Drug Safety alerts, ESC/ACC press releases, and IDSA guideline updates so refreshes are evidence-driven, not calendar-driven alone.
       </div>
+    </div>
+  </div>
+
+  <div style="margin-top:18px">
+    <div style="font-size:11px;text-transform:uppercase;letter-spacing:0.08em;color:var(--muted);font-weight:600;margin-bottom:6px">Severity / status color coding</div>
+    <div class="legend" data-context="rx">
+      <span class="chip chip-contra">CONTRA &mdash; contraindicated / avoid</span>
+      <span class="chip chip-major">MAJOR &mdash; significant; modify or monitor closely</span>
+      <span class="chip chip-mod">MODERATE &mdash; clinically relevant; consider alternatives</span>
+      <span class="chip chip-minor">MINOR &mdash; theoretical / low impact</span>
+      <span class="chip chip-none">NONE &mdash; none documented</span>
+    </div>
+    <div class="legend" data-context="cond">
+      <span class="chip chip-st-CONTRA">CONTRA &mdash; avoid / contraindicated</span>
+      <span class="chip chip-st-CAUTION">CAUTION &mdash; significant risk</span>
+      <span class="chip chip-st-DOSE">DOSE ADJ &mdash; specific adjustment required</span>
+      <span class="chip chip-st-MONITOR">MONITOR &mdash; extra surveillance</span>
+      <span class="chip chip-st-SAFE">SAFE &mdash; no adjustment</span>
+      <span class="chip chip-st-NA">N/A &mdash; not addressed</span>
     </div>
   </div>
 
@@ -5962,7 +5995,7 @@ const CV_CLASS_ORDER = [
 ];
 const INTER_GROUP_ORDER = ['Antacid','Analgesic','Antibiotic','Psychiatric','Neurologic','Endocrine','Respiratory','GI','Rheumatology','Urology','Supplement'];
 
-const TAB_CONTEXT = { check:'both', rx:'both', matrix:'rx', lookup:'rx', browse:'rx', cond:'cond', profile:'cond', icu_form:'cond', icu_cond:'cond', icu_profile:'cond', brands:'none', fdc:'none', refs:'none' };
+const TAB_CONTEXT = { check:'both', se:'none', rx:'both', matrix:'rx', lookup:'rx', browse:'rx', cond:'cond', profile:'cond', icu_form:'cond', icu_cond:'cond', icu_profile:'cond', brands:'none', fdc:'none', refs:'none' };
 function applyTabContext(tab){
   const ctx = TAB_CONTEXT[tab] || 'rx';
   document.body.classList.toggle('ctx-rx',  ctx==='rx'   || ctx==='both');
@@ -6715,6 +6748,94 @@ function buildDrugCheckPicker(){
   });
 }
 
+/* ---------- SIDE EFFECTS TAB (single-drug lookup) ----------
+   Reuses the same search-any-drug universe as the "Check a drug" tab (cvDrugs / icuDrugs /
+   interactors) and the SE_BY_DRUG / SE_BY_CLASS data + rxSideEffectsFor() lookup that also
+   power the Rx Analyzer's per-drug "Side effects" section. */
+let seDrug = null; // {type:'cv'|'icu'|'interactor', drug}
+
+function seLookup(label){
+  const cv = cvDrugs.find(d => label === d.name + ' — CV · ' + d.cls);
+  if(cv) return { type:'cv', drug:cv };
+  const icu = icuDrugs.find(d => label === d.name + ' — ICU · ' + d.cls);
+  if(icu) return { type:'icu', drug:icu };
+  const it = interactors.find(d => label === d.name + ' — ' + d.group + ' · ' + d.cls);
+  if(it) return { type:'interactor', drug:it };
+  return null;
+}
+
+function buildSePicker(){
+  const dl = document.getElementById('se-drug-list');
+  if(!dl) return;
+  dl.innerHTML = '';
+  cvDrugs.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d.name + ' — CV · ' + d.cls;
+    dl.appendChild(opt);
+  });
+  icuDrugs.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d.name + ' — ICU · ' + d.cls;
+    dl.appendChild(opt);
+  });
+  interactors.slice().sort((a,b)=>a.name.localeCompare(b.name)).forEach(d=>{
+    const opt = document.createElement('option');
+    opt.value = d.name + ' — ' + d.group + ' · ' + d.cls;
+    dl.appendChild(opt);
+  });
+  const inp = document.getElementById('se-drug-input');
+  if(!inp) return;
+  inp.addEventListener('input', ()=>{
+    const found = seLookup(inp.value.trim());
+    if(found){ seDrug = found; renderSeCard(); }
+    else if(inp.value.trim()===''){ seDrug = null; renderSeCard(); }
+  });
+  inp.addEventListener('change', ()=>{
+    const found = seLookup(inp.value.trim());
+    if(found){ seDrug = found; renderSeCard(); }
+  });
+}
+
+function renderSeCard(){
+  const card = document.getElementById('se-drug-card');
+  if(!card) return;
+  if(!seDrug){
+    card.innerHTML = '<div class="dc-empty">Type ANY drug name in the box above — cardiovascular, cardiometabolic, ICU/anti-infective, or interactor (antacid, analgesic, antibiotic, antifungal, antiviral, anti-tubercular) — to see its common and serious side effects.</div>';
+    return;
+  }
+  const d = seDrug.drug;
+  const isIcu = seDrug.type === 'icu';
+  const typeLabel = seDrug.type==='cv' ? 'Cardiovascular / metabolic' : (isIcu ? 'ICU' : 'Interactor (' + d.group + ')');
+  const se = (typeof rxSideEffectsFor === 'function') ? rxSideEffectsFor(seDrug) : null;
+  let html = `
+    <div class="dc-drug-card">
+      <h2>${escapeHtml(d.name)}</h2>
+      <div class="meta">${escapeHtml(typeLabel)} · ${escapeHtml(d.cls||'')}${isIcu?' · '+escapeHtml(d.group):''}</div>
+    </div>
+    <div class="rx-se-section" style="margin-top:0">
+      <div class="rx-se-head">💊 Side effects</div>
+      <div class="rx-se-list">
+        <div class="rx-se-card">
+          <div class="rx-se-rows">`;
+  if(se && se.common && se.common.length && se.common[0] !== '-'){
+    html += `<div class="rx-se-row rx-se-common"><span class="rx-se-tag">Common</span><span class="rx-se-items">${se.common.map(escapeHtml).join(', ')}</span></div>`;
+  }
+  if(se && se.serious && se.serious.length && se.serious[0] !== '-'){
+    html += `<div class="rx-se-row rx-se-serious"><span class="rx-se-tag">Serious / monitor for</span><span class="rx-se-items">${se.serious.map(escapeHtml).join(', ')}</span></div>`;
+  }
+  if(!se || ((!se.common || !se.common.length || se.common[0]==='-') && (!se.serious || !se.serious.length || se.serious[0]==='-'))){
+    html += `<div class="rx-se-row rx-se-common"><span class="rx-se-items">No side-effect data catalogued for this drug/class yet — consult product labeling.</span></div>`;
+  }
+  html += `
+          </div>
+        </div>
+      </div>
+    </div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px">Curated summary for quick clinical orientation — not exhaustive. Verify against full product labeling before acting on individual patient care.</div>
+  `;
+  card.innerHTML = html;
+}
+
 function dcRenderIxCard(x, idx, sortedAll){
   const isMostSevere = idx===0 && x.r.sev==='CONTRA';
   return `
@@ -7277,6 +7398,9 @@ function buildIndianBrands(){
 
 buildDrugCheckPicker();
 renderDrugCheck();
+
+buildSePicker();
+renderSeCard();
 
 buildMatrix();
 buildLookup();
@@ -11651,6 +11775,215 @@ function rxEnrichInteraction(r, cvDrug, interDrug){
   return out;
 }
 
+/* ---------- SIDE EFFECTS DATA (for Rx Analyzer) ----------
+   Keyed by drug class (matches the `cls` field used across cvDrugs / interactors / icuDrugs).
+   Each entry: { common:[...], serious:[...] } — "common" = frequently seen / usually manageable,
+   "serious" = uncommon but clinically important, warrants monitoring or prompt action.
+   A small drug-specific override map (SE_BY_DRUG) takes priority for a handful of CV drugs whose
+   side-effect profile is distinctive enough that the class-level summary undersells it.
+   This is a curated summary for quick clinical orientation, not a substitute for full labeling. */
+const SE_BY_CLASS = {
+  "Statin": {common:["Myalgia","GI upset","Transaminase elevation"], serious:["Rhabdomyolysis (rare)","Hepatotoxicity"]},
+  "Anticoagulant (VKA)": {common:["Bruising","Bleeding gums"], serious:["Major hemorrhage","Skin necrosis (rare, protein C/S deficiency)"]},
+  "Anticoagulant IV": {common:["Bruising","Injection-site bleeding"], serious:["Major hemorrhage","Heparin-induced thrombocytopenia (unfractionated)"]},
+  "Anticoagulant IV/SC": {common:["Bruising","Injection-site reaction"], serious:["Major hemorrhage","HIT (rare with LMWH)"]},
+  "Anticoagulant SC": {common:["Bruising","Injection-site reaction"], serious:["Major hemorrhage"]},
+  "Direct thrombin inhibitor IV": {common:["Bruising"], serious:["Major hemorrhage"]},
+  "DOAC": {common:["Bruising","Mild GI upset"], serious:["Major hemorrhage","GI bleeding"]},
+  "Antiplatelet": {common:["Bruising","Dyspepsia"], serious:["Bleeding","GI hemorrhage"]},
+  "PDE3 inhibitor (antiplatelet)": {common:["Headache","Palpitations","Flushing"], serious:["Worsening heart failure (boxed warning)"]},
+  "Thrombolytic": {common:["Bruising"], serious:["Intracranial hemorrhage","Major bleeding"]},
+  "Reversal agent": {common:["Injection-site reaction"], serious:["Thrombotic events (rare)"]},
+  "Beta-blocker": {common:["Fatigue","Cold extremities","Bradycardia"], serious:["Bronchospasm (non-selective)","Heart block","Masked hypoglycemia"]},
+  "Beta-blocker IV": {common:["Bradycardia","Hypotension"], serious:["Heart block","Bronchospasm"]},
+  "Beta-blocker (topical — systemic absorption possible)": {common:["Ocular stinging"], serious:["Systemic bradycardia/bronchospasm (rare, absorption)"]},
+  "ACE inhibitor": {common:["Dry cough","Dizziness"], serious:["Angioedema","Hyperkalemia","Acute kidney injury"]},
+  "ARB": {common:["Dizziness"], serious:["Hyperkalemia","Acute kidney injury","Angioedema (rare)"]},
+  "ARNI": {common:["Dizziness","Hypotension"], serious:["Angioedema","Hyperkalemia","Renal impairment"]},
+  "Direct renin inhibitor": {common:["Diarrhea","Dizziness"], serious:["Angioedema","Hyperkalemia"]},
+  "CCB (dihydropyridine)": {common:["Peripheral edema","Flushing","Headache"], serious:["Reflex tachycardia"]},
+  "CCB IV (DHP)": {common:["Hypotension","Flushing"], serious:["Reflex tachycardia"]},
+  "CCB (non-DHP)": {common:["Constipation","Bradycardia"], serious:["Heart block","Worsening HFrEF"]},
+  "CCB (cerebroselective — SAH vasospasm prophylaxis)": {common:["Hypotension","Headache"], serious:["Significant hypotension"]},
+  "Loop diuretic": {common:["Polyuria","Dizziness"], serious:["Hypokalemia","Ototoxicity (high-dose IV)","Dehydration"]},
+  "Loop diuretic IV": {common:["Hypotension"], serious:["Ototoxicity","Severe electrolyte loss"]},
+  "Thiazide": {common:["Polyuria","Photosensitivity"], serious:["Hyponatremia","Hypokalemia","Hyperglycemia"]},
+  "Thiazide-like": {common:["Polyuria"], serious:["Hyponatremia","Hypokalemia"]},
+  "K-sparing diuretic": {common:["Gynecomastia (spironolactone)"], serious:["Hyperkalemia"]},
+  "Non-steroidal MRA": {common:["Nausea"], serious:["Hyperkalemia"]},
+  "Carbonic anhydrase inhibitor (diuretic)": {common:["Paresthesia","Metallic taste"], serious:["Metabolic acidosis"]},
+  "Osmotic diuretic": {common:["Headache"], serious:["Fluid/electrolyte shifts","Renal impairment"]},
+  "Osmotic / volume": {common:["Bloating"], serious:["Fluid overload"]},
+  "Antiarrhythmic": {common:["GI upset","Fatigue"], serious:["Proarrhythmia","QT prolongation"]},
+  "Antiarrhythmic IV": {common:["Hypotension"], serious:["Proarrhythmia","QT prolongation"]},
+  "Antiarrhythmic (Class Ib)": {common:["Dizziness","Tremor"], serious:["Seizures (toxicity)","Arrhythmia"]},
+  "Cardiac glycoside": {common:["Nausea","Visual halos"], serious:["Arrhythmia (toxicity)","Heart block"]},
+  "Nitrate": {common:["Headache","Flushing","Hypotension"], serious:["Severe hypotension (with PDE5i)"]},
+  "K-channel activator / nitrate donor (anti-anginal)": {common:["Headache","Flushing"], serious:["Hypotension"]},
+  "If channel inhibitor": {common:["Luminous phenomena (phosphenes)","Bradycardia"], serious:["Atrial fibrillation"]},
+  "Late Na+ inhibitor": {common:["Constipation","Dizziness"], serious:["QT prolongation"]},
+  "Metabolic modulator (anti-anginal)": {common:["Dizziness"], serious:["QT prolongation (rare)"]},
+  "Direct arterial vasodilator": {common:["Headache","Reflex tachycardia"], serious:["Drug-induced lupus (hydralazine)"]},
+  "Vasodilator IV": {common:["Hypotension","Headache"], serious:["Cyanide toxicity (nitroprusside, prolonged use)"]},
+  "sGC stimulator": {common:["Headache","Dizziness"], serious:["Hypotension"]},
+  "Central alpha-2 agonist": {common:["Dry mouth","Sedation"], serious:["Rebound hypertension on abrupt withdrawal"]},
+  "Central alpha-2 agonist (pregnancy)": {common:["Sedation","Dry mouth"], serious:["Rebound hypertension"]},
+  "α1-blocker": {common:["Orthostatic hypotension","Dizziness"], serious:["First-dose syncope"]},
+  "α1-blocker (uroselective)": {common:["Dizziness"], serious:["Intraoperative floppy iris syndrome"]},
+  "Inotrope": {common:["Tachycardia"], serious:["Arrhythmia","Myocardial ischemia"]},
+  "Vasopressor": {common:["Headache"], serious:["Peripheral/end-organ ischemia","Arrhythmia"]},
+  "Vasopressor adjunct": {common:["Headache"], serious:["Ischemia"]},
+  "PDE5 inhibitor": {common:["Headache","Flushing","Dyspepsia"], serious:["Severe hypotension (with nitrates)","Priapism (rare)"]},
+  "Endothelin receptor antagonist": {common:["Headache","Edema"], serious:["Hepatotoxicity","Teratogenicity"]},
+  "Prostacyclin analog": {common:["Headache","Jaw pain","Flushing"], serious:["Hypotension"]},
+  "IP receptor agonist": {common:["Headache","Flushing"], serious:["Hypotension"]},
+  "Fibrate": {common:["GI upset"], serious:["Myopathy","Hepatotoxicity","Gallstones"]},
+  "Cholesterol absorption inhibitor": {common:["Diarrhea"], serious:["Hepatotoxicity (rare)"]},
+  "ATP-citrate lyase inhibitor": {common:["Tendon pain"], serious:["Hyperuricemia","Tendon rupture (rare)"]},
+  "PCSK9 inhibitor": {common:["Injection-site reaction"], serious:["Allergic reaction (rare)"]},
+  "PCSK9 siRNA": {common:["Injection-site reaction"], serious:["Allergic reaction (rare)"]},
+  "Biguanide": {common:["GI upset","Metallic taste"], serious:["Lactic acidosis (rare, renal impairment)","B12 deficiency"]},
+  "Sulfonylurea": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Meglitinide": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Thiazolidinedione": {common:["Weight gain","Edema"], serious:["Heart failure exacerbation","Fracture risk"]},
+  "DPP-4 inhibitor": {common:["Nasopharyngitis"], serious:["Pancreatitis (rare)","Joint pain"]},
+  "SGLT2 inhibitor": {common:["Genital mycotic infection","Polyuria"], serious:["Euglycemic DKA","Fournier's gangrene (rare)"]},
+  "GLP-1 receptor agonist": {common:["Nausea","GI upset"], serious:["Pancreatitis (rare)","Gallbladder disease"]},
+  "GIP/GLP-1 receptor agonist": {common:["Nausea","GI upset"], serious:["Pancreatitis (rare)"]},
+  "Alpha-glucosidase inhibitor": {common:["Flatulence","Diarrhea"], serious:["Hepatotoxicity (rare)"]},
+  "Rapid-acting insulin": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Short-acting insulin": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Intermediate insulin": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Long-acting insulin": {common:["Weight gain"], serious:["Hypoglycemia"]},
+  "Thyroid hormone": {common:["Palpitations (over-replacement)"], serious:["Arrhythmia","Angina (over-replacement)"]},
+  "Anti-thyroid": {common:["Rash","GI upset"], serious:["Agranulocytosis (rare)","Hepatotoxicity"]},
+  "Bisphosphonate": {common:["Esophageal irritation","GI upset"], serious:["Osteonecrosis of jaw (rare)","Atypical fracture"]},
+  "Bisphosphonate (IV)": {common:["Flu-like reaction","Fever"], serious:["Osteonecrosis of jaw","Renal impairment"]},
+  "RANKL inhibitor": {common:["Musculoskeletal pain"], serious:["Hypocalcemia","Osteonecrosis of jaw"]},
+  "Hormonal contraceptive": {common:["Nausea","Breast tenderness"], serious:["Venous thromboembolism"]},
+  "NSAID (non-selective)": {common:["Dyspepsia","GI upset"], serious:["GI bleeding","Renal impairment","Cardiovascular risk"]},
+  "NSAID (preferential COX-2)": {common:["Dyspepsia"], serious:["GI bleeding (lower risk)","Renal impairment"]},
+  "NSAID IV": {common:["Dyspepsia"], serious:["GI bleeding","Renal impairment"]},
+  "COX-2 selective NSAID": {common:["Dyspepsia","Edema"], serious:["Cardiovascular risk","Renal impairment"]},
+  "COX-2 selective NSAID (IV)": {common:["Edema"], serious:["Cardiovascular risk"]},
+  "Non-opioid analgesic": {common:["Nausea (rare)"], serious:["Hepatotoxicity (overdose/chronic high-dose)"]},
+  "Non-opioid analgesic IV": {common:["Nausea"], serious:["Hepatotoxicity (overdose)"]},
+  "Opioid": {common:["Constipation","Sedation","Nausea"], serious:["Respiratory depression","Dependence"]},
+  "Opioid IV": {common:["Sedation","Nausea"], serious:["Respiratory depression"]},
+  "Opioid (atypical)": {common:["Nausea","Dizziness"], serious:["Seizures (tramadol)","Serotonin syndrome"]},
+  "µ-opioid (antidiarrheal)": {common:["Constipation"], serious:["Cardiac arrhythmia (high-dose misuse)"]},
+  "Triptan (5-HT1B/D agonist)": {common:["Chest tightness","Paresthesia"], serious:["Coronary vasospasm"]},
+  "Anti-gout": {common:["GI upset"], serious:["Hepatotoxicity (colchicine overdose)","Bone marrow suppression"]},
+  "Xanthine oxidase inhibitor": {common:["Rash"], serious:["Hepatotoxicity","Severe hypersensitivity (rare)"]},
+  "DMARD": {common:["Nausea","Rash"], serious:["Hepatotoxicity","Bone marrow suppression"]},
+  "DMARD (folate antagonist)": {common:["Nausea","Mouth sores"], serious:["Hepatotoxicity","Bone marrow suppression","Pulmonary toxicity"]},
+  "Corticosteroid (oral)": {common:["Weight gain","Insomnia","Mood changes"], serious:["Hyperglycemia","Adrenal suppression","GI bleeding"]},
+  "Corticosteroid IV": {common:["Hyperglycemia"], serious:["Adrenal suppression","Immunosuppression"]},
+  "Inhaled corticosteroid": {common:["Oral candidiasis","Hoarseness"], serious:["Adrenal suppression (high-dose, long-term)"]},
+  "β2 agonist (LABA)": {common:["Tremor","Tachycardia"], serious:["Arrhythmia (high-dose)"]},
+  "β2 agonist (SABA)": {common:["Tremor","Tachycardia"], serious:["Arrhythmia (overuse)"]},
+  "LAMA": {common:["Dry mouth"], serious:["Urinary retention"]},
+  "SAMA": {common:["Dry mouth"], serious:["Urinary retention (rare)"]},
+  "Leukotriene antagonist": {common:["Headache"], serious:["Neuropsychiatric events (rare)"]},
+  "Methylxanthine": {common:["Nausea","Tremor","Insomnia"], serious:["Arrhythmia","Seizures (toxicity)"]},
+  "Methylxanthine (theophylline analogue)": {common:["Nausea","Tremor"], serious:["Arrhythmia","Seizures (toxicity)"]},
+  "PPI": {common:["Headache","GI upset"], serious:["C. difficile risk","B12/Mg deficiency (long-term)"]},
+  "H2 blocker": {common:["Headache"], serious:["Confusion (elderly, rare)"]},
+  "Cation antacid": {common:["Constipation/diarrhea"], serious:["Hypermagnesemia (renal impairment)"]},
+  "Mucosal protectant": {common:["Constipation"], serious:["-"]},
+  "Prokinetic (D2 antagonist + AChE inhibitor)": {common:["Diarrhea"], serious:["Cholinergic crisis (rare)"]},
+  "D2 antagonist (prokinetic)": {common:["Drowsiness"], serious:["Extrapyramidal symptoms","Tardive dyskinesia"]},
+  "5-HT3 antagonist (antiemetic)": {common:["Headache","Constipation"], serious:["QT prolongation"]},
+  "Antimuscarinic (OAB)": {common:["Dry mouth","Constipation"], serious:["Urinary retention","Cognitive impairment (elderly)"]},
+  "SSRI": {common:["Nausea","Insomnia","Sexual dysfunction"], serious:["Serotonin syndrome","GI bleeding (with NSAIDs/antiplatelets)"]},
+  "SNRI": {common:["Nausea","Diaphoresis"], serious:["Serotonin syndrome","Hypertension"]},
+  "Tricyclic antidepressant": {common:["Dry mouth","Sedation","Weight gain"], serious:["QT prolongation","Anticholinergic toxicity"]},
+  "Atypical antidepressant": {common:["Insomnia","Dry mouth"], serious:["Seizures (bupropion, dose-related)"]},
+  "Mood stabilizer": {common:["Tremor","Weight gain"], serious:["Toxicity (narrow therapeutic index)","Renal/thyroid effects (lithium)"]},
+  "Atypical antipsychotic": {common:["Weight gain","Sedation"], serious:["QT prolongation","Metabolic syndrome"]},
+  "Typical antipsychotic": {common:["Sedation","Extrapyramidal symptoms"], serious:["QT prolongation","Tardive dyskinesia","Neuroleptic malignant syndrome"]},
+  "Benzodiazepine": {common:["Sedation","Dizziness"], serious:["Respiratory depression (with opioids)","Dependence"]},
+  "Sedative": {common:["Drowsiness"], serious:["Respiratory depression"]},
+  "AED": {common:["Drowsiness","Dizziness"], serious:["Hepatotoxicity","Hyponatremia"]},
+  "AED (CYP inducer)": {common:["Drowsiness","Ataxia"], serious:["Hepatotoxicity","Blood dyscrasia (rare)"]},
+  "AED / neuropathic": {common:["Dizziness","Peripheral edema"], serious:["-"]},
+  "AED IV": {common:["Sedation"], serious:["Hepatotoxicity"]},
+  "Anti-parkinsonian": {common:["Nausea","Dyskinesia"], serious:["Orthostatic hypotension","Hallucinations"]},
+  "5α-reductase inhibitor": {common:["Sexual dysfunction"], serious:["Gynecomastia (rare)"]},
+  "Beta-lactam": {common:["GI upset","Rash"], serious:["Anaphylaxis (rare)","C. difficile colitis"]},
+  "Beta-lactam IV": {common:["Rash"], serious:["Anaphylaxis","C. difficile colitis"]},
+  "3rd-gen cephalosporin (oral)": {common:["GI upset"], serious:["Anaphylaxis (cross-reactivity, rare)"]},
+  "Macrolide": {common:["GI upset"], serious:["QT prolongation","Hepatotoxicity"]},
+  "Macrolide IV": {common:["Infusion-site reaction"], serious:["QT prolongation"]},
+  "Fluoroquinolone": {common:["GI upset","Headache"], serious:["QT prolongation","Tendon rupture","Peripheral neuropathy"]},
+  "Fluoroquinolone IV": {common:["Infusion-site reaction"], serious:["QT prolongation","Tendon rupture"]},
+  "Tetracycline": {common:["GI upset","Photosensitivity"], serious:["Esophageal ulceration","Hepatotoxicity (high-dose IV)"]},
+  "Tetracycline IV": {common:["Photosensitivity"], serious:["Hepatotoxicity"]},
+  "Glycylcycline IV": {common:["Nausea"], serious:["Hepatotoxicity","Pancreatitis"]},
+  "Sulfonamide": {common:["Rash","GI upset"], serious:["Stevens-Johnson syndrome (rare)","Bone marrow suppression"]},
+  "Sulfonamide IV": {common:["Rash"], serious:["Stevens-Johnson syndrome (rare)","Hyperkalemia"]},
+  "Aminoglycoside IV": {common:["-"], serious:["Nephrotoxicity","Ototoxicity"]},
+  "Glycopeptide IV": {common:["Infusion reaction (\"red man\")"], serious:["Nephrotoxicity","Ototoxicity"]},
+  "Lipoglycopeptide IV": {common:["Infusion reaction"], serious:["Nephrotoxicity"]},
+  "Lipopeptide IV": {common:["Injection-site reaction"], serious:["Myopathy","Eosinophilic pneumonia (rare)"]},
+  "Oxazolidinone": {common:["GI upset"], serious:["Serotonin syndrome","Bone marrow suppression (prolonged use)"]},
+  "Oxazolidinone IV": {common:["Nausea"], serious:["Serotonin syndrome","Thrombocytopenia"]},
+  "Lincosamide IV": {common:["GI upset"], serious:["C. difficile colitis (high risk)"]},
+  "Polymyxin IV": {common:["-"], serious:["Nephrotoxicity","Neurotoxicity"]},
+  "Rifamycin": {common:["Orange discoloration of secretions"], serious:["Hepatotoxicity"]},
+  "Nitroimidazole": {common:["Metallic taste","GI upset"], serious:["Peripheral neuropathy (prolonged use)","Disulfiram-like reaction with alcohol"]},
+  "Nitroimidazole IV": {common:["Metallic taste"], serious:["Peripheral neuropathy"]},
+  "Antimycobacterial": {common:["GI upset"], serious:["Hepatotoxicity","Peripheral neuropathy"]},
+  "Anti-tubercular": {common:["GI upset","Orange secretions (rifampin)"], serious:["Hepatotoxicity","Optic neuritis (ethambutol)"]},
+  "Azole antifungal": {common:["GI upset","Headache"], serious:["Hepatotoxicity","QT prolongation"]},
+  "Azole antifungal IV": {common:["Infusion reaction"], serious:["Hepatotoxicity","QT prolongation"]},
+  "Echinocandin IV": {common:["Infusion reaction"], serious:["Hepatotoxicity (rare)"]},
+  "Polyene antifungal IV": {common:["Infusion reaction","Fever"], serious:["Nephrotoxicity"]},
+  "Antiviral IV": {common:["Nausea"], serious:["Nephrotoxicity","Bone marrow suppression"]},
+  "NMBA": {common:["-"], serious:["Prolonged paralysis","Anaphylaxis (rare)"]},
+  "NMBA (depolarizing)": {common:["Muscle fasciculation"], serious:["Hyperkalemia","Malignant hyperthermia (rare)"]},
+  "Somatostatin analog": {common:["GI upset"], serious:["Gallstones","Hyperglycemia"]},
+  "Antidote": {common:["-"], serious:["Anaphylaxis (rare)"]},
+  "Antidote / antimuscarinic": {common:["Dry mouth","Tachycardia"], serious:["Anticholinergic toxicity"]},
+  "Antidote / electrolyte": {common:["-"], serious:["Hypercalcemia (overcorrection)"]},
+  "Buffer / antidote": {common:["-"], serious:["Metabolic alkalosis (overcorrection)"]},
+  "Electrolyte": {common:["GI upset"], serious:["Hyperkalemia/hypernatremia (overcorrection)"]},
+  "Calcium salt": {common:["Constipation"], serious:["Hypercalcemia","Tissue necrosis (extravasation)"]},
+  "Iron salt": {common:["Constipation","GI upset"], serious:["Iron overload (chronic)"]},
+  "Vitamin": {common:["-"], serious:["Toxicity with high-dose fat-soluble vitamins"]},
+  "Alkalinizer": {common:["GI upset"], serious:["Metabolic alkalosis","Hypokalemia"]},
+  "Endocrine": {common:["Variable"], serious:["Variable — see specific agent"]},
+};
+
+// Drug-specific overrides — take priority over SE_BY_CLASS when the individual drug's profile
+// is distinctive enough that the class-level summary undersells it.
+const SE_BY_DRUG = {
+  amiodarone: {common:["Photosensitivity","Corneal microdeposits","Tremor"], serious:["Pulmonary fibrosis","Thyroid dysfunction (hypo/hyper)","Hepatotoxicity","QT prolongation/torsades"]},
+  digoxin: {common:["Nausea","Visual halos/yellow-green vision"], serious:["Life-threatening arrhythmia in toxicity","Heart block"]},
+  warfarin: {common:["Bruising","Bleeding gums"], serious:["Major hemorrhage","Skin/tissue necrosis (rare)"]},
+  metformin: {common:["GI upset","Metallic taste","Diarrhea"], serious:["Lactic acidosis (rare, renal impairment)","B12 deficiency (long-term)"]},
+  spironolactone: {common:["Gynecomastia","Menstrual irregularity"], serious:["Hyperkalemia"]},
+  sildenafil: {common:["Headache","Flushing","Dyspepsia"], serious:["Severe hypotension with nitrates","Priapism (rare)","Non-arteritic ischemic optic neuropathy (rare)"]},
+  tadalafil: {common:["Headache","Flushing","Back pain","Myalgia"], serious:["Severe hypotension with nitrates","Priapism (rare)"]},
+  hydralazine: {common:["Headache","Reflex tachycardia","Flushing"], serious:["Drug-induced lupus (dose/duration-dependent)"]},
+  clopidogrel: {common:["Bruising","Dyspepsia"], serious:["Bleeding","Thrombotic thrombocytopenic purpura (rare)"]},
+  furosemide: {common:["Polyuria","Muscle cramps","Dizziness"], serious:["Hypokalemia","Ototoxicity (high-dose IV)","Dehydration/AKI"]},
+  levothyroxine: {common:["Palpitations if over-replaced","Insomnia"], serious:["Arrhythmia","Angina (over-replacement)"]},
+  sacubitril_valsartan: {common:["Dizziness","Hypotension"], serious:["Angioedema","Hyperkalemia","Renal impairment"]},
+  ivabradine: {common:["Luminous phosphenes (visual brightness)","Bradycardia"], serious:["Atrial fibrillation"]},
+  ranolazine: {common:["Constipation","Dizziness","Nausea"], serious:["QT prolongation"]},
+};
+
+/* Resolve side effects for one detected drug entry (from detectedDrugs).
+   Priority: drug-specific override (SE_BY_DRUG) > class-level (SE_BY_CLASS) > generic fallback. */
+function rxSideEffectsFor(drugEntry){
+  const d = drugEntry.drug;
+  if(!d) return null;
+  if(SE_BY_DRUG[d.id]) return SE_BY_DRUG[d.id];
+  if(d.cls && SE_BY_CLASS[d.cls]) return SE_BY_CLASS[d.cls];
+  return { common:['Consult product labeling — not yet catalogued for this class in this tool.'], serious:[] };
+}
+
 function rxAnalyze(detectedDrugs, detectedConds){
   const findings = { interactions:[], comorbidity:[] };
   // 1) All drug-pair interactions
@@ -11815,6 +12148,31 @@ function rxRenderResults(detectedDrugs, detectedConds, findings){
       ${totalAlerts===0?`<span class="rx-summary-chip" style="${chipClean}">✓ No actionable alerts</span>`:''}
     </div>
   </div>`;
+
+  // ===== 2.3 SIDE EFFECTS — per detected drug, shown BEFORE interactions so the clinician sees
+  // what each drug can cause on its own before reading how the combination behaves. =====
+  if(detectedDrugs.length){
+    html += `<div class="rx-se-section">
+      <div class="rx-se-head">💊 Side effects by drug · ${detectedDrugs.length}</div>
+      <div class="rx-se-list">`;
+    detectedDrugs.forEach(d => {
+      const se = rxSideEffectsFor(d);
+      if(!se) return;
+      const drug = d.drug;
+      const brandTag = d.brand ? ` <span class="rx-drug-brand">[${escapeHtml(d.brand)}]</span>` : '';
+      html += `<div class="rx-se-card">
+        <div class="rx-se-drug"><span class="rx-se-drug-name">${escapeHtml(drug.name)}</span>${brandTag}<span class="rx-se-drug-cls">${escapeHtml(drug.cls||'')}</span></div>
+        <div class="rx-se-rows">`;
+      if(se.common && se.common.length && se.common[0] !== '-'){
+        html += `<div class="rx-se-row rx-se-common"><span class="rx-se-tag">Common</span><span class="rx-se-items">${se.common.map(escapeHtml).join(', ')}</span></div>`;
+      }
+      if(se.serious && se.serious.length && se.serious[0] !== '-'){
+        html += `<div class="rx-se-row rx-se-serious"><span class="rx-se-tag">Serious / monitor for</span><span class="rx-se-items">${se.serious.map(escapeHtml).join(', ')}</span></div>`;
+      }
+      html += `</div></div>`;
+    });
+    html += `</div></div>`;
+  }
 
   // ===== 2.5 CRITICAL FINDINGS — drug-pair interactions side-by-side, deduplicated =====
   // Each interaction appears ONCE as "Drug A + Drug B" with severity badge.
