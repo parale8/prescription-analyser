@@ -612,36 +612,45 @@
     let isMinimized = false, isExpanded = false;
     const NORMAL_W = 480, NORMAL_H = 850;
     const MIN_H = 42;
+    const TOP_OFFSET = 90; // matches the bookmarklet's initial "below the bookmarks bar" offset
+
+    // Always re-anchors to the RIGHT edge of the screen — every resize recomputes `left` from
+    // the current screen width and the new window width, so the popup never drifts to the left
+    // no matter which sequence of minimize/expand/restore the user clicks.
+    function dockRight(w, hgt, top){
+      try {
+        const sw = screen.availWidth || screen.width || (window.screenX + w);
+        const left = Math.max(0, sw - w);
+        window.resizeTo(w, hgt);
+        window.moveTo(left, top);
+      } catch(e){ /* some browsers block resizeTo/moveTo on windows they didn't open */ }
+    }
 
     document.getElementById('og-btn-min').addEventListener('click', ()=>{
-      try {
-        if(!isMinimized){
-          window.resizeTo(NORMAL_W, MIN_H);
-          isMinimized = true;
-        } else {
-          window.resizeTo(NORMAL_W, NORMAL_H);
-          isMinimized = false;
-        }
-      } catch(e){ /* some browsers block resizeTo on windows they didn't open */ }
+      if(!isMinimized){
+        dockRight(NORMAL_W, MIN_H, TOP_OFFSET);
+        isMinimized = true;
+      } else {
+        dockRight(NORMAL_W, NORMAL_H, TOP_OFFSET);
+        isMinimized = false;
+      }
     });
 
     document.getElementById('og-btn-expand').addEventListener('click', ()=>{
-      try {
-        if(!isExpanded){
-          window.resizeTo(Math.min(900, screen.availWidth), screen.availHeight);
-          window.moveTo(0, 0);
-          isExpanded = true;
-          document.getElementById('og-btn-expand').innerHTML = '&#9635;';
-          document.getElementById('og-btn-expand').title = 'Restore';
-        } else {
-          window.resizeTo(NORMAL_W, NORMAL_H);
-          window.moveTo(0, 20);
-          isExpanded = false;
-          document.getElementById('og-btn-expand').innerHTML = '&#9633;';
-          document.getElementById('og-btn-expand').title = 'Expand';
-        }
-        isMinimized = false;
-      } catch(e){}
+      if(!isExpanded){
+        const ew = Math.min(900, screen.availWidth || screen.width || 900);
+        const eh = screen.availHeight || screen.height || 900;
+        dockRight(ew, eh, 0);
+        isExpanded = true;
+        document.getElementById('og-btn-expand').innerHTML = '&#9635;';
+        document.getElementById('og-btn-expand').title = 'Restore';
+      } else {
+        dockRight(NORMAL_W, NORMAL_H, TOP_OFFSET);
+        isExpanded = false;
+        document.getElementById('og-btn-expand').innerHTML = '&#9633;';
+        document.getElementById('og-btn-expand').title = 'Expand';
+      }
+      isMinimized = false;
     });
 
     document.getElementById('og-btn-close').addEventListener('click', ()=>{
