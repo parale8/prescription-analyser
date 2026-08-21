@@ -588,6 +588,68 @@
 </style>
 </head>
 <body>
+<!-- ONEGLANCE PANEL CONTROL BAR — only shown when the page is opened by the OneGlance
+     bookmarklet/extension as a small popup window (URL hash contains panel=1). Gives the
+     popup its own minimize / expand / close controls since real browser popup windows
+     opened via window.open() don't reliably expose OS-level minimize/maximize buttons. -->
+<div id="og-panel-bar" style="display:none;position:sticky;top:0;left:0;right:0;z-index:9999;background:#0d1117;border-bottom:1px solid #232a33;padding:6px 10px;align-items:center;justify-content:space-between;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif">
+  <span style="color:#7dd3fc;font-size:12px;font-weight:700;letter-spacing:0.03em">💊 OneGlance Rx</span>
+  <span style="display:flex;gap:6px">
+    <button id="og-btn-min" type="button" title="Minimize" style="width:26px;height:26px;border-radius:6px;border:1px solid #232a33;background:#161b22;color:#e6edf3;font-size:14px;line-height:1;cursor:pointer">&#8211;</button>
+    <button id="og-btn-expand" type="button" title="Expand" style="width:26px;height:26px;border-radius:6px;border:1px solid #232a33;background:#161b22;color:#e6edf3;font-size:12px;line-height:1;cursor:pointer">&#9633;</button>
+    <button id="og-btn-close" type="button" title="Close" style="width:26px;height:26px;border-radius:6px;border:1px solid #232a33;background:#161b22;color:#fca5a5;font-size:14px;line-height:1;cursor:pointer">&#10005;</button>
+  </span>
+</div>
+<script>
+(function oneGlancePanelBar(){
+  try {
+    const h = window.location.hash || '';
+    if(!/[#&]panel=1/.test(h)) return; // only show inside the bookmarklet's popup
+    const bar = document.getElementById('og-panel-bar');
+    if(!bar) return;
+    bar.style.display = 'flex';
+
+    let isMinimized = false, isExpanded = false;
+    const NORMAL_W = 480, NORMAL_H = 850;
+    const MIN_H = 42;
+
+    document.getElementById('og-btn-min').addEventListener('click', ()=>{
+      try {
+        if(!isMinimized){
+          window.resizeTo(NORMAL_W, MIN_H);
+          isMinimized = true;
+        } else {
+          window.resizeTo(NORMAL_W, NORMAL_H);
+          isMinimized = false;
+        }
+      } catch(e){ /* some browsers block resizeTo on windows they didn't open */ }
+    });
+
+    document.getElementById('og-btn-expand').addEventListener('click', ()=>{
+      try {
+        if(!isExpanded){
+          window.resizeTo(Math.min(900, screen.availWidth), screen.availHeight);
+          window.moveTo(0, 0);
+          isExpanded = true;
+          document.getElementById('og-btn-expand').innerHTML = '&#9635;';
+          document.getElementById('og-btn-expand').title = 'Restore';
+        } else {
+          window.resizeTo(NORMAL_W, NORMAL_H);
+          window.moveTo(0, 20);
+          isExpanded = false;
+          document.getElementById('og-btn-expand').innerHTML = '&#9633;';
+          document.getElementById('og-btn-expand').title = 'Expand';
+        }
+        isMinimized = false;
+      } catch(e){}
+    });
+
+    document.getElementById('og-btn-close').addEventListener('click', ()=>{
+      window.close();
+    });
+  } catch(e) { console.warn('oneGlancePanelBar failed:', e); }
+})();
+</script>
 <!-- CACHE-BUSTER + SERVICE-WORKER KILLER — runs immediately on page load so any cached
      version of the app (Service Worker, AppCache, browser HTTP cache) is purged.
      Runs BEFORE the rest of the page renders so the user always sees the latest build. -->
